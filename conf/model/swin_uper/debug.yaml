@@ -1,0 +1,29 @@
+class_path: geosprite.learning.lightning_module.ClassificationModule
+init_args:
+  encoder:
+    class_path: geosprite.learning.model.image.encoder.SwinTransformer
+    init_args:
+      image_channels: 5
+      patch_size: 2
+      stages_args:
+        use_absolute_position_embedding: False
+        use_relative_position_embedding: True
+        window_size: 8
+        embedding_dim: 64
+        depth_in_stages: [ 2, 2, 6, 2 ]
+        heads_in_stages: [ 3, 6, 12, 24 ]
+        out_indices: [ 0, 1, 2, 3 ]
+        mlp_ratio: 2
+        dropout: 0
+  decoder:
+    class_path: geosprite.learning.model.image.decoder.UPerDecoder
+    init_args:
+      input_dims: [ 64, 128, 256, 512 ]
+      output_dim: 512
+      pool_scales: [ 1, 2, 3, 6 ]
+  header:
+    class_path: geosprite.learning.model.image.header.LinearHeader
+    init_args:
+      num_classes: 2
+      input_dim: 512
+      scale_factor: 2

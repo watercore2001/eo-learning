@@ -1,0 +1,25 @@
+seed_everything: 0
+
+data: ../conf/data/pastis_xls.yaml
+model: ../conf/model/tsvit/debug.yaml
+trainer: ../conf/trainer/debug.yaml
+
+optimizer:
+  class_path: torch.optim.AdamW
+  init_args:
+    lr: 1e-3
+
+
+lr_scheduler:
+  class_path: geosprite.learning.lr_scheduler.CosineAnnealingWithWarmup
+  init_args:
+    warmup_steps: 10
+    annealing_steps: 90
+    max_lr: 1e-3
+    min_lr: 1e-5
+
+
+wandb_logger:
+  project: debug
+  name: gaussian
+  version: gaussian

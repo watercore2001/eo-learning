@@ -1,0 +1,15 @@
+class_path: geosprite.learning.lightning_module.MaeFineTuningModule
+init_args:
+  pretrain_ckpt_path: C:\Users\watercore\Desktop\code\project\geosprite-engine\eo-learning\workspace\mae_pretrain\build\checkpoints\epoch=1-step=12.ckpt
+  decoder:
+    class_path: geosprite.learning.model.image.decoder.UPerDecoder
+    init_args:
+      input_dims: [ 64, 128, 256, 512 ]
+      output_dim: 512
+      pool_scales: [ 1, 2, 3, 6 ]
+  header:
+    class_path: geosprite.learning.model.image.header.LinearHeader
+    init_args:
+      num_classes: 2
+      input_dim: 512
+      scale_factor: 2

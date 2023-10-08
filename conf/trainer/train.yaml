@@ -1,0 +1,17 @@
+accelerator: gpu
+max_epochs: 100
+logger: True
+default_root_dir: /home/xials/project/workspace
+profiler: simple
+callbacks:
+  - class_path: pytorch_lightning.callbacks.ModelCheckpoint
+    init_args:
+      filename: '{epoch:03d}_{val_jaccardindex_macro:.4f}_{val_accuracy_micro:.4f}'
+      monitor: val_jaccardindex_macro
+      mode: max
+      save_last: False
+  - class_path: pytorch_lightning.callbacks.EarlyStopping
+    init_args:
+      monitor: val_jaccardindex_macro
+      mode: max
+      patience: 20

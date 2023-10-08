@@ -1,0 +1,20 @@
+seed_everything: 0
+
+data: ../conf/data/build_xls.yaml
+model: ../conf/model/mae/pretrain.yaml
+
+trainer:
+  accelerator: cpu
+  max_epochs: 10
+  logger: True
+  default_root_dir: "C:/Users/watercore/Desktop/code/project/geosprite-engine/eo-learning/workspace"
+  profiler: simple
+  callbacks:
+    - class_path: pytorch_lightning.callbacks.ModelCheckpoint
+
+
+
+wandb_logger:
+  project: mae_pretrain
+  name: build
+  version: build
