@@ -102,6 +102,7 @@ class PastisDataset(Dataset):
             means = [norm_vals[f"Fold_{f}"]["mean"] for f in self.folds]
             stds = [norm_vals[f"Fold_{f}"]["std"] for f in self.folds]
             self.band_norm = (
+                # mean across folds
                 torch.from_numpy(np.stack(means).mean(axis=0)).float(),
                 torch.from_numpy(np.stack(stds).mean(axis=0)).float(),)
 

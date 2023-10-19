@@ -1,4 +1,3 @@
-import re
 import torch
 import collections.abc
 from torch.nn import functional
