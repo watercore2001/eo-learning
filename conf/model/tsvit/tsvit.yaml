@@ -8,10 +8,9 @@ init_args:
       embedding_dim: 128
       num_classes: 20
       position_encoder:
-        class_path: geosprite.learning.model.video.encoder.GaussianTilesDoyPositionEncoder
+        class_path: geosprite.learning.model.video.encoder.DoyPositionEncoder
         init_args:
           embedding_dim: 128
-          time_length_in_each_tile: [ 43, 61, 46, 38 ]
       temporal_encoder:
         class_path: geosprite.learning.model.time_series.encoder.Transformer
         init_args:
