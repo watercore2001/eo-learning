@@ -48,7 +48,7 @@ class LuccDataset(Dataset):
             max_list = [value["max"] for value in norm_data_dict.values()]
         return np.array(min_list), np.array(max_list)
 
-    def get_missing_band_indices(self, item_path:int):
+    def get_missing_band_indices(self, item_path: str):
         metadata_path = os.path.join(os.path.dirname(item_path), self.metadata_filename)
         with open(metadata_path) as file:
             metadata = json.load(file)
