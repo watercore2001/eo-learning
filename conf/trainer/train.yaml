@@ -1,3 +1,4 @@
+devices: 8
 accelerator: gpu
 max_epochs: 100
 logger: True
