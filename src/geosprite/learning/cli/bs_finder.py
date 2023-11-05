@@ -26,7 +26,7 @@ class LitDataModule(LuccDataModule):
 
 
 def init_datamodule():
-    return LitDataModule()
+    return LitDataModule(batch_size=16)
 
 
 def main():
