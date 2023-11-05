@@ -34,7 +34,7 @@ def main():
     model = init_model()
     datamodule = init_datamodule()
     trainer = Trainer(accelerator="gpu", devices=1, default_root_dir="/home/xials/code/eo-learning/workspace/",
-                      max_epochs=100)
+                      max_steps=10000000, max_epochs=100)
     tuner = Tuner(trainer)
     tuner.scale_batch_size(model=model, datamodule=datamodule)
     print(f"find batch size: {datamodule.batch_size}")
