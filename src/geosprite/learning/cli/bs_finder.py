@@ -26,7 +26,7 @@ def main():
     torch.set_float32_matmul_precision('medium')
     model = init_model()
     datamodule = init_datamodule()
-    trainer = Trainer(accelerator="gpu", devices=8, default_root_dir="/home/xials/code/eo-learning/workspace/")
+    trainer = Trainer(accelerator="gpu", devices=1, default_root_dir="/home/xials/code/eo-learning/workspace/")
     tuner = Tuner(trainer)
     tuner.scale_batch_size(model=model, datamodule=datamodule)
     print("find batch size: {model.batch_size}")
