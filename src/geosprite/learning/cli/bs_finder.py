@@ -15,11 +15,18 @@ def init_model():
     return SimMIMPreTrainingModule(encoder=encoder, header=header, optim_args=optim_args)
 
 
+class LitDataModule(LuccDataModule):
+    def __init__(self):
+        dataset_args = DatasetArgs(folder="/mnt/data1/dataset/sentinel-s2-l2a/", image_size=512,
+                                   num_channels=10, mask_patch_size=32, model_patch_size=4,
+                                   mask_ratio=0.5, use_norm=True)
+        dataloader_args = BaseDataloaderArgs(batch_size=32, num_workers=16, pin_memory=True)
+        self.batch_size = 32
+        super().__init__(dataset_args, dataloader_args)
+
+
 def init_datamodule():
-    return LuccDataModule(dataset_args=DatasetArgs(folder="/mnt/data1/dataset/sentinel-s2-l2a/", image_size=512,
-                                                   num_channels=10, mask_patch_size=32, model_patch_size=4,
-                                                   mask_ratio=0.5, use_norm=True),
-                          dataloader_args=BaseDataloaderArgs(batch_size=32, num_workers=16, pin_memory=True))
+    return LitDataModule()
 
 
 def main():
@@ -29,6 +36,6 @@ def main():
     trainer = Trainer(accelerator="gpu", devices=1, default_root_dir="/home/xials/code/eo-learning/workspace/")
     tuner = Tuner(trainer)
     tuner.scale_batch_size(model=model, datamodule=datamodule)
-    print("find batch size: {model.batch_size}")
+    print(f"find batch size: {datamodule.batch_size}")
 
 
