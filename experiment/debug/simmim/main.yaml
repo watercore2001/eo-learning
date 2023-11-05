@@ -7,5 +7,5 @@ trainer: ./trainer.yaml
 
 wandb_logger:
   project: simmim
-  name: debug2
-  version: debug2
+  name: debug3
+  version: debug3

@@ -2,7 +2,7 @@ seed_everything: 0
 
 data: ../conf/data/pastis.yaml
 model: ../conf/model/tsvit/tsvit.yaml
-trainer: ../conf/trainer/train.yaml
+trainer: ../conf/trainer/classification.yaml
 
 optimizer:
   class_path: torch.optim.AdamW

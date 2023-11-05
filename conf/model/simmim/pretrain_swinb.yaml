@@ -8,3 +8,9 @@ init_args:
     class_path: geosprite.learning.model.image.header.ReshapeHeaderForSwinBase
     init_args:
       num_classes: 10
+  optim_args:
+    weight_decay: 0.05
+    warmup_epochs: 10
+    annealing_epochs: 90
+    max_lr: 1e-4
+    min_lr: 1e-5

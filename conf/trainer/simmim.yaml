@@ -1,7 +1,8 @@
-accelerator: cpu
-max_epochs: 20
+accelerator: gpu
+devices: 8
+max_epochs: 200
 logger: True
-default_root_dir: "/mnt/code/eo-learning/workspace/"
+default_root_dir: "/home/xials/code/eo-learning/workspace/"
 profiler: simple
 callbacks:
   - class_path: pytorch_lightning.callbacks.ModelCheckpoint

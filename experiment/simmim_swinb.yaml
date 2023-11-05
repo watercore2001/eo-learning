@@ -1,0 +1,11 @@
+seed_everything: 0
+
+data: ../conf/data/lucc.yaml
+model: ../conf/model/simmim/pretrain_swinb.yaml
+trainer: ../conf/trainer/simmim.yaml
+
+
+wandb_logger:
+  project: simmim
+  name: swinb_base
+  version: swinb_base

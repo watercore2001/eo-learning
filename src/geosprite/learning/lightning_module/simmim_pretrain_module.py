@@ -48,9 +48,14 @@ class SimMIMPreTrainingModule(LightningModule):
 
         # 0 value in x means nodata, model cannot recover it
         loss_mask = (mask == 1) & (x != 0)
-        loss = (all_loss * loss_mask).sum() / loss_mask.sum()
-        self.log(name="train_loss", value=loss, on_step=True, sync_dist=True)
-        return loss
+        mask_loss = (all_loss * loss_mask).sum() / loss_mask.sum()
+        self.log(name="mask_loss", value=mask_loss, on_step=True, sync_dist=True)
+
+        loss_mask = x != 0
+        global_loss = (all_loss * loss_mask).sum() / loss_mask.sum()
+        self.log(name="global_loss", value=global_loss, on_step=True, sync_dist=True)
+
+        return mask_loss
 
     def get_param_groups(self):
         def check_keywords_in_name(name_: str, skip_keywords_: set[str]):
