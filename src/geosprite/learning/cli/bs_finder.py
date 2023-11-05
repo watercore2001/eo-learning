@@ -16,7 +16,7 @@ def init_model():
 
 
 def init_datamodule():
-    return LuccDataModule(dataset_args=DatasetArgs(folder="/mnt/data4/sentinel-s2-l2a-cogs/", image_size=512,
+    return LuccDataModule(dataset_args=DatasetArgs(folder="/mnt/data1/dataset/sentinel-s2-l2a/", image_size=512,
                                                    num_channels=10, mask_patch_size=32, model_patch_size=4,
                                                    mask_ratio=0.5, use_norm=True),
                           dataloader_args=BaseDataloaderArgs(batch_size=32, num_workers=16, pin_memory=True))
