@@ -7,5 +7,5 @@ trainer: ../conf/trainer/simmim.yaml
 
 wandb_logger:
   project: simmim
-  name: swinb_base
-  version: swinb_base
+  name: swinb_init
+  version: swinb_init
