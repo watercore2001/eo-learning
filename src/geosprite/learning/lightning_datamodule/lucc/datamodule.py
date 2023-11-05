@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from .dataset import DatasetArgs, LuccDataset
 from ..base_dataloader import BaseDataloaderArgs
 
-__all__ = ["DatasetArgs", "BaseDataloaderArgs", "LuccDataModule"]
+__all__ = ["DatasetArgs", "LuccDataset", "BaseDataloaderArgs", "LuccDataModule"]
 
 
 class LuccDataModule(LightningDataModule):
