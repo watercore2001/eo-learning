@@ -103,8 +103,8 @@ class PastisDataset(Dataset):
             stds = [norm_vals[f"Fold_{f}"]["std"] for f in self.folds]
             self.band_norm = (
                 # mean across folds
-                torch.from_numpy(np.stack(means).mean(axis=0)).float(),
-                torch.from_numpy(np.stack(stds).mean(axis=0)).float(),)
+                torch.Tensor(np.stack(means).mean(axis=0)).float(),
+                torch.Tensor(np.stack(stds).mean(axis=0)).float(),)
 
         # Get Location norms
         if args.use_location:
@@ -141,7 +141,7 @@ class PastisDataset(Dataset):
         Returns:
             x: {s: torch.Tensor (t) } in float32
         """
-        dates = torch.from_numpy(self.date_tables[patch_id])
+        dates = torch.Tensor(self.date_tables[patch_id])
         return dates
 
     def get_x(self, patch_id: int) -> dict:
@@ -150,7 +150,7 @@ class PastisDataset(Dataset):
             x: {s: torch.Tensor (t,c,h,w) } in float32
         """
         # T x C x H x W
-        data = torch.from_numpy(np.load(
+        data = torch.Tensor(np.load(
             os.path.join(
                 self.folder,
                 f"DATA_S2",
@@ -163,11 +163,11 @@ class PastisDataset(Dataset):
         if self.use_location:
             t, c, h, w = data.size()
             bounds = self.meta_table.bounds.loc[patch_id]
-            x = torch.from_numpy(np.linspace(bounds.minx, bounds.maxx, w).astype(np.float32))
+            x = torch.Tensor(np.linspace(bounds.minx, bounds.maxx, w).astype(np.float32))
             x = (x - self.x_mean) / self.x_std
             x = repeat(x, "w -> t 1 h w", t=t, h=h)
 
-            y = torch.from_numpy(np.linspace(bounds.miny, bounds.maxy, h).astype(np.float32))
+            y = torch.Tensor(np.linspace(bounds.miny, bounds.maxy, h).astype(np.float32))
             y = (y - self.y_mean) / self.y_std
             y = repeat(y, "h -> t 1 h w", t=t, w=w)
 
@@ -187,7 +187,7 @@ class PastisDataset(Dataset):
                     self.folder, "ANNOTATIONS", f"TARGET_{patch_id}.npy"
                 )
             )
-            y = torch.from_numpy(y[0].astype("int64"))
+            y = torch.Tensor(y[0].astype("int64"))
         elif self.task == "instance":
             heatmap = np.load(
                 os.path.join(
@@ -229,7 +229,7 @@ class PastisDataset(Dataset):
                         pixel_to_object_mapping == instance_id
                         ] = pixel_semantic_annotation[instance_ids == instance_id][0]
 
-            y = torch.from_numpy(
+            y = torch.Tensor(
                 np.concatenate(
                     [
                         heatmap[:, :, None],  # 0

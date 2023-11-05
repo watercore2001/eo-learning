@@ -4,6 +4,8 @@ from pytorch_lightning import LightningModule
 from .metrics import generate_classification_metric, separate_classes_metric
 import os
 
+__all__ = ["ClassificationModule"]
+
 
 class ClassificationModule(LightningModule):
     def __init__(self, encoder: nn.Module = None, decoder: nn.Module = None, header: nn.Module = None,
@@ -31,7 +33,7 @@ class ClassificationModule(LightningModule):
         self.val_classes_metric = classes_metrics.clone(prefix="val_")
         self.test_classes_metric = classes_metrics.clone(prefix="test_")
 
-        # save all hyperparameters for checkpoint
+        # must save all hyperparameters for checkpoint
         self.save_hyperparameters(logger=False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -46,14 +48,14 @@ class ClassificationModule(LightningModule):
         x, y = batch
         y_hat = self(x)
         loss = self.cross_entropy_loss(y_hat, y)
-        self.log("train_loss", loss)
+        self.log(name="train_loss", value=loss, sync_dist=True)
         return loss
 
     def validation_step(self, batch: tuple[torch.Tensor, torch.Tensor], batch_index: int):
         x, y = batch
         y_hat = self(x)
         loss = self.cross_entropy_loss(y_hat, y)
-        self.log("val_loss", loss)
+        self.log(name="val_loss", value=loss, sync_dist=True)
         self.val_global_metric.update(y_hat, y)
         self.val_classes_metric.update(y_hat, y)
 
@@ -62,7 +64,7 @@ class ClassificationModule(LightningModule):
         classes_metric_value = separate_classes_metric(self.val_classes_metric.compute())
 
         metric_values = {**global_metric_value, **classes_metric_value}
-        self.log_dict(metric_values)
+        self.log_dict(metric_values, sync_dist=True)
 
         self.val_global_metric.reset()
         self.val_classes_metric.reset()
@@ -82,7 +84,7 @@ class ClassificationModule(LightningModule):
         classes_metric_value = separate_classes_metric(self.test_classes_metric.compute())
 
         metric_values = {**global_metric_value, **classes_metric_value}
-        self.log_dict(metric_values)
+        self.log_dict(metric_values, sync_dist=True)
 
         self.test_global_metric.reset()
         self.test_classes_metric.reset()

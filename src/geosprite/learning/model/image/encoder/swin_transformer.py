@@ -9,6 +9,9 @@ import math
 from timm.models.layers import trunc_normal_
 
 
+__all__ = ["SwinTransformerStagesArgs", "SwinTransformerStages"]
+
+
 def add_tensor(x: torch.Tensor | None, y: torch.Tensor | None):
     if x is None and y is None:
         return None
@@ -22,14 +25,14 @@ def add_tensor(x: torch.Tensor | None, y: torch.Tensor | None):
 def window_partition(x: torch.Tensor, window_size: int):
     # the order of (window_num_in_h window_size_in_h) is important: window_num_in_h pieces of window
     return rearrange(x,
-                     "b c (window_num_in_h window_size_in_h) (window_num_in_w window_size_in_w) -> "
+                     pattern="b c (window_num_in_h window_size_in_h) (window_num_in_w window_size_in_w) -> "
                      "(b window_num_in_h window_num_in_w) (window_size_in_h window_size_in_w) c",
                      window_size_in_h=window_size, window_size_in_w=window_size)
 
 
 def window_reverse(x: torch.Tensor, window_num_in_h: int, window_num_in_w: int, window_size: int):
     return rearrange(x,
-                     "(b window_num_in_h window_num_in_w) (window_size_in_h window_size_in_w) c -> "
+                     pattern="(b window_num_in_h window_num_in_w) (window_size_in_h window_size_in_w) c -> "
                      "b c (window_num_in_h window_size_in_h) (window_num_in_w window_size_in_w)",
                      window_num_in_h=window_num_in_h, window_num_in_w=window_num_in_w,
                      window_size_in_h=window_size, window_size_in_w=window_size)
@@ -70,7 +73,7 @@ class WindowShifter:
         # img must have four dimension, so the mask can be data by self.window_partition
         mask_windows = window_partition(img_mask[None, None, :, :], window_size=self.window_size)
 
-        mask_windows = rearrange(mask_windows, "window_num mm 1 -> window_num mm")
+        mask_windows = rearrange(mask_windows, pattern="window_num mm 1 -> window_num mm")
         shift_mask = mask_windows[:, None, :] - mask_windows[:, :, None]
         shift_mask = shift_mask.masked_fill(shift_mask != 0, -float('inf')).masked_fill(shift_mask == 0, 0)
         # (window_num, m * m, m * m)
@@ -157,7 +160,7 @@ class SwinTransformerBlock(nn.Module):
         if self.cyclic_shifter is not None:
             # shift_mask is not parameter
             x, shift_mask = self.cyclic_shifter.shift(x)
-            shift_mask = repeat(shift_mask, "window_num_per_image mm1 mm2 -> (b window_num_per_image) heads mm1 mm2",
+            shift_mask = repeat(shift_mask, pattern="window_num_per_image mm1 mm2 -> (b window_num_per_image) heads mm1 mm2",
                                 b=b, heads=self.heads)
         else:
             shift_mask = None
@@ -169,9 +172,10 @@ class SwinTransformerBlock(nn.Module):
 
         # 4.relative position embedding
         if self.use_relative_position_embedding:
-            relative_position_index = rearrange(self.relative_position_index, "mm1 mm2 -> (mm1 mm2)")
+            relative_position_index = rearrange(self.relative_position_index, pattern="mm1 mm2 -> (mm1 mm2)")
             relative_position_embedding = self.relative_position_embedding_table[relative_position_index]
-            relative_position_embedding = repeat(relative_position_embedding, "(mm1 mm2) heads -> new_b heads mm1 mm2",
+            relative_position_embedding = repeat(relative_position_embedding,
+                                                 pattern="(mm1 mm2) heads -> new_b heads mm1 mm2",
                                                  new_b=b * window_num_in_h * window_num_in_w,
                                                  mm1=self.window_size ** 2,
                                                  mm2=self.window_size ** 2,
@@ -291,7 +295,6 @@ class SwinTransformerStage(nn.Module):
 @dataclasses.dataclass
 class SwinTransformerStagesArgs:
     """
-    Args:
         use_absolute_position_embedding: bool
         use_relative_position_embedding: bool
         embedding_dim: Number of linear projection output channels
@@ -350,6 +353,10 @@ class SwinTransformerStages(nn.Module):
                 dropout=stages_args.dropout,
             )) for i in range(self.num_stages)])
 
+    @torch.jit.ignore
+    def no_weight_decay_keywords(self):
+        return {"relative_position_embedding_table", "absolute_position_embedding"}
+
     def forward(self, x: torch.Tensor):
         b, c, h, w = x.size()
         window_num_in_h = math.ceil(h / self.window_size)
@@ -361,7 +368,7 @@ class SwinTransformerStages(nn.Module):
             # 2. copy the window to cover the entire input x: (m, m, c) -> (b, c, n*m, n*m)
             # understanding the order in (n*m) is really important: combining n pieces of m
             absolute_position_embedding = repeat(self.absolute_position_embedding,
-                                                 "(m1 m2) c -> c (window_num_in_h m1) (window_num_in_w m2)",
+                                                 pattern="(m1 m2) c -> c (window_num_in_h m1) (window_num_in_w m2)",
                                                  c=c,
                                                  window_num_in_h=window_num_in_h,
                                                  window_num_in_w=window_num_in_w,
@@ -399,7 +406,7 @@ class SwinTransformer(nn.Module):
 
         # split image into non-overlapping patches
         self.patch_embed = nn.Sequential(
-            Rearrange("b c (p1 new_h) (p2 new_w) -> b new_h new_w (p1 p2 c)", p1=patch_size, p2=patch_size),
+            Rearrange(pattern="b c (p1 new_h) (p2 new_w) -> b new_h new_w (p1 p2 c)", p1=patch_size, p2=patch_size),
             nn.Linear(patch_size ** 2 * image_channels, stages_args.embedding_dim),
             Rearrange("b new_h new_w new_c -> b new_c new_h new_w"))
 

@@ -4,6 +4,8 @@ from geosprite.learning.model.time_series.encoder import Transformer, Transforme
 from einops import rearrange
 from einops.layers.torch import Rearrange
 
+__all__ = ["WindowTransformer"]
+
 
 class WindowTransformer(nn.Module):
     """ local transformer to simulate the model in TSViT paper

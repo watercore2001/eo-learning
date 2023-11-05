@@ -6,16 +6,10 @@ from torch.utils.data import DataLoader
 from pytorch_lightning import LightningDataModule
 from .transform import ToNormalizedTensor
 from .dataset import RasterFolderDataset, DatesetArgs
+from ..base_dataloader import BaseDataloaderArgs
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-
-
-@dataclasses.dataclass
-class DataloaderArgs:
-    batch_size: int
-    num_workers: int
-    pin_memory: bool
 
 
 class RasterFolderModule(LightningDataModule):
@@ -23,7 +17,7 @@ class RasterFolderModule(LightningDataModule):
             self,
             root: str,
             dataset_args: DatesetArgs,
-            dataloader_args: DataloaderArgs
+            dataloader_args: BaseDataloaderArgs
     ):
         super().__init__()
 

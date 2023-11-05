@@ -1,8 +1,8 @@
 seed_everything: 0
 
 data: ../conf/data/pastis_xls.yaml
-model: ../conf/model/tsvit/debug.yaml
-trainer: ../conf/trainer/debug.yaml
+model: ../conf/model/tsvit/trainer.yaml
+trainer: ../conf/trainer/trainer.yaml
 
 optimizer:
   class_path: torch.optim.AdamW

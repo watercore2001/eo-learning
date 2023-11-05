@@ -8,19 +8,31 @@ import rasterio
 from torch.utils.data import Dataset
 import glob
 
+from .mask_generator import MaskGenerator
+
 
 @dataclasses.dataclass
 class DatasetArgs:
     """
     folder: Path to the dataset
+    image_size: model input image size
+    channels: model input channels
+    mask_patch_size: mask patch size
+    model_patch_size: model patch size
+    mask_ratio: mask ratio
     use_norm: If true, images are standardised using pre-computed channel-wise min and max value.
     """
     folder: str
+    image_size: int
+    num_channels: int
+    mask_patch_size: int
+    model_patch_size: int
+    mask_ratio: float
     use_norm: bool = True
 
 
 class LuccDataset(Dataset):
-    input_bands = ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B8A", "B11", "B12"]
+    available_bands = ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B8A", "B11", "B12"]
     norm_filename = "norm.json"
     metadata_filename = "metadata.json"
 
@@ -30,6 +42,12 @@ class LuccDataset(Dataset):
 
         self.item_paths = self.init_item_paths()
         self.norm_min, self.norm_max = self.init_min_max()
+
+        self.mask_generator = MaskGenerator(image_size=args.image_size,
+                                            channels=args.num_channels,
+                                            mask_patch_size=args.mask_patch_size,
+                                            model_patch_size=args.model_patch_size,
+                                            mask_ratio=args.mask_ratio)
 
     def init_item_paths(self) -> list:
         item_paths = []
@@ -44,6 +62,7 @@ class LuccDataset(Dataset):
         norm_data_path = os.path.join(self.folder, self.norm_filename)
         with open(norm_data_path) as file:
             norm_data_dict = json.load(file)
+            # use 0 as min value
             min_list = [0 for _ in norm_data_dict.values()]
             max_list = [value["max"] for value in norm_data_dict.values()]
         return np.array(min_list), np.array(max_list)
@@ -53,24 +72,36 @@ class LuccDataset(Dataset):
         with open(metadata_path) as file:
             metadata = json.load(file)
         bands = metadata["bands"]
-        missing_indices = [i for i, band in enumerate(self.input_bands) if band not in bands]
+        missing_indices = [i for i, band in enumerate(self.available_bands) if band not in bands]
         return missing_indices
 
-    def __len__(self):
-        return len(self.item_paths)
-
-    def __getitem__(self, index: int):
+    def get_x(self, index: int):
         item_path = self.item_paths[index]
         with rasterio.open(item_path) as src:
             data = src.read()
 
         missing_indices = self.get_missing_band_indices(item_path)
-        data = np.insert(data, missing_indices, 0, axis=0)
+        data = np.insert(data, missing_indices, values=0, axis=0)
 
         if self.use_norm:
-            data = np.clip((data-self.norm_min[:, None, None])/((self.norm_max-self.norm_min)[:, None, None]), 0, 1)
+            data = np.clip((data - self.norm_min[:, None, None]) / ((self.norm_max - self.norm_min)[:, None, None]),
+                           a_min=0, a_max=1)
 
-        return torch.from_numpy(data), missing_indices
+        return torch.Tensor(data)
+
+    def __len__(self):
+        return len(self.item_paths)
+
+    def __getitem__(self, index: int):
+        x = self.get_x(index)
+        mask = self.mask_generator()
+
+        # x shape: c h w
+        # mask shape: c patch_num_in_h patch_num_in_w
+        return x, mask
+
+
+
 
 
 

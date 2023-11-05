@@ -38,7 +38,7 @@ def main():
     for x, y, patch_id in dataloader:
         patch_id = patch_id.numpy()[0]
         pred_file = os.path.join(args.output_folder, f"{patch_id}.npy")
-        pred = torch.from_numpy(np.load(pred_file))
+        pred = torch.Tensor(np.load(pred_file))
         pred = rearrange(pred, "h w->1 h w")
         if patch_id < 20000:
             metric_1.update(pred, y)

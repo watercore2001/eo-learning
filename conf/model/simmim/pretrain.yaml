@@ -1,0 +1,10 @@
+class_path: geosprite.learning.lightning_module.SimMIMPreTrainingModule
+init_args:
+  encoder:
+    class_path: geosprite.learning.model.image.encoder.SwinTransformerForSimMIMBase
+    init_args:
+      image_channels: 10
+  header:
+    class_path: geosprite.learning.model.image.header.ReshapeHeaderForSwinBase
+    init_args:
+      num_classes: 10

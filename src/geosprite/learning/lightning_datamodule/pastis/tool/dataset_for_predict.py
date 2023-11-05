@@ -118,8 +118,8 @@ class PastisDataset(Dataset):
                 stds = [norm_vals[f"Fold_{f}"]["std"] for f in self.folds]
                 self.norm[s] = np.stack(means).mean(axis=0), np.stack(stds).mean(axis=0)
                 self.norm[s] = (
-                    torch.from_numpy(self.norm[s][0]).float(),
-                    torch.from_numpy(self.norm[s][1]).float(),
+                    torch.Tensor(self.norm[s][0]).float(),
+                    torch.Tensor(self.norm[s][1]).float(),
                 )
         else:
             self.norm = None
@@ -133,7 +133,7 @@ class PastisDataset(Dataset):
         Returns:
             x: {s: torch.Tensor (t) } in float32
         """
-        dates = {s: torch.from_numpy(self.date_tables[s][patch_id]) for s in self.sats}
+        dates = {s: torch.Tensor(self.date_tables[s][patch_id]) for s in self.sats}
         return dates
 
     def get_x(self, patch_id: int) -> dict:
@@ -151,7 +151,7 @@ class PastisDataset(Dataset):
             ).astype(np.float32)
             for satellite in self.sats
         }  # T x C x H x W arrays
-        data = {s: torch.from_numpy(a) for s, a in data.items()}
+        data = {s: torch.Tensor(a) for s, a in data.items()}
 
         if self.norm is not None:
             data = {
@@ -173,7 +173,7 @@ class PastisDataset(Dataset):
                     self.folder, "ANNOTATIONS", f"TARGET_{patch_id}.npy"
                 )
             )
-            y = torch.from_numpy(y[0].astype(int))
+            y = torch.Tensor(y[0].astype(int))
         elif self.task == "instance":
             heatmap = np.load(
                 os.path.join(
@@ -215,7 +215,7 @@ class PastisDataset(Dataset):
                         pixel_to_object_mapping == instance_id
                         ] = pixel_semantic_annotation[instance_ids == instance_id][0]
 
-            y = torch.from_numpy(
+            y = torch.Tensor(
                 np.concatenate(
                     [
                         heatmap[:, :, None],  # 0

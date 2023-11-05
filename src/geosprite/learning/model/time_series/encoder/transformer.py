@@ -47,18 +47,18 @@ class Attention(nn.Module):
         """
         b, l, _ = x.size()
         qkv = self.to_qkv(x).chunk(3, dim=-1)
-        q, k, v = map(lambda t: rearrange(t, 'b l (n d) -> b n l d', n=self.heads), qkv)
+        q, k, v = map(lambda t: rearrange(t, pattern="b l (n d) -> b n l d", n=self.heads), qkv)
         if x.device.type == "cuda":
             # memory efficient attention is only available for cuda
             # https://pytorch.org/docs/master/generated/torch.nn.functional.scaled_dot_product_attention.html
             x = functional.scaled_dot_product_attention(q, k, v, attn_mask, dropout_p=self.dropout_rate)
         else:
-            attn = einsum(q, k, 'b n l1 d, b n l2 d -> b n l1 l2').mul(self.scale)
+            attn = einsum(q, k, "b n l1 d, b n l2 d -> b n l1 l2").mul(self.scale)
             attn += attn_mask if attn_mask is not None else 0
             attn = attn.softmax(dim=-1)
             attn = self.dropout(attn)
             x = einsum(attn, v, 'b n l1 l2, b n l2 d -> b n l1 d')
-        x = rearrange(x, 'b n l d -> b l (n d)')
+        x = rearrange(x, pattern="b n l d -> b l (n d)")
         x = self.output(x)
         return x
 

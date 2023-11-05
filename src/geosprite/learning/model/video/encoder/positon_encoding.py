@@ -3,6 +3,9 @@ from torch import nn
 import torch
 from torch.signal import windows
 
+__all__ = ["DoyPositionEncoder", "TilesDoyPositionEncoder", "GaussianTilesDoyPositionEncoder"]
+
+
 class DoyPositionEncoder(nn.Module):
     def __init__(self, embedding_dim: int):
         super().__init__()

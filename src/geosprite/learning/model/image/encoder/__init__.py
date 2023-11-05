@@ -1,2 +1,3 @@
-from .swin_transformer import SwinTransformerStagesArgs, SwinTransformerStages, SwinTransformer
-from .window_transformer import WindowTransformer
+from .swin_transformer import *
+from .window_transformer import *
+from .swin_transformer_for_simmin import *

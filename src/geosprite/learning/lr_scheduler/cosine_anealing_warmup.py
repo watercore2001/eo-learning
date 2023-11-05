@@ -1,27 +1,27 @@
 import math
 import torch
-from torch.optim.lr_scheduler import _LRScheduler
+from torch.optim.lr_scheduler import LRScheduler
 
 
-class CosineAnnealingWithWarmup(_LRScheduler):
+class CosineAnnealingWithWarmup(LRScheduler):
     """
         optimizer (Optimizer): Wrapped optimizer.
-        warmup_steps(int): Linear warmup step size. Default: 0.
-        annealing_steps (int): annealing steps
-        max_lr(float): First cycle's max learning rate. Default: 0.1.
-        min_lr(float): Min learning rate. Default: 0.001.
+        warmup_epochs (int): Linear warmup step size. Default: 0.
+        annealing_epochs (int): annealing steps
+        max_lr (float): First cycle's max learning rate. Default: 0.1.
+        min_lr (float): Min learning rate. Default: 0.001.
     """
 
     def __init__(self,
                  optimizer: torch.optim.Optimizer,
-                 warmup_steps: int,
-                 annealing_steps: int,
+                 warmup_epochs: int,
+                 annealing_epochs: int,
                  max_lr: float,
                  min_lr: float,
                  ):
 
-        self.warmup_steps = warmup_steps  # warmup step size
-        self.annealing_steps = annealing_steps
+        self.warmup_epochs = warmup_epochs  # warmup epochs
+        self.annealing_epochs = annealing_epochs
         self.max_lr = max_lr  # max learning rate in the current cycle
         self.min_lr = min_lr  # min learning rate
         self.current_epoch = -1
@@ -32,18 +32,18 @@ class CosineAnnealingWithWarmup(_LRScheduler):
     def get_lr(self):
         assert self.current_epoch >= 0
 
-        if self.current_epoch <= self.warmup_steps:
-            lr = self.max_lr * self.current_epoch / self.warmup_steps
-        elif self.current_epoch < self.warmup_steps + self.annealing_steps:
+        if self.current_epoch <= self.warmup_epochs:
+            lr = self.max_lr * self.current_epoch / self.warmup_epochs
+        elif self.current_epoch < self.warmup_epochs + self.annealing_epochs:
             # 0 -> 1
-            annealing_phase = (self.current_epoch - self.warmup_steps) / self.annealing_steps
+            annealing_phase = (self.current_epoch - self.warmup_epochs) / self.annealing_epochs
             lr = self.min_lr + (self.max_lr - self.min_lr) * (1 + math.cos(math.pi * annealing_phase)) / 2
         else:
             lr = self.min_lr
 
         return [lr] * len(self.optimizer.param_groups)
 
-    def step(self):
+    def step(self, epoch=None):
         self.current_epoch += 1
 
         for param_group, lr in zip(self.optimizer.param_groups, self.get_lr()):

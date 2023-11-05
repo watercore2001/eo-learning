@@ -6,21 +6,19 @@ from pytorch_lightning import LightningDataModule
 from .dataset import PastisDataset, DatasetArgs
 import dataclasses
 from typing import Callable
+from ..base_dataloader import BaseDataloaderArgs
 
 
 @dataclasses.dataclass
-class DataloaderArgs:
-    batch_size: int = 1
-    num_workers: int = 0
-    pin_memory: bool = True
-    collate_fn: Callable = None
+class DataloaderArgs(BaseDataloaderArgs):
+    collate_fn: Callable
 
     def __post_init__(self):
         self.collate_fn = lambda x: pad_collate(x, pad_value=0)
 
 
-def pad_tensor(x, l, pad_value=0):
-    pad_len = l - x.shape[0]
+def pad_tensor(x, length, pad_value=0):
+    pad_len = length - x.shape[0]
     pad = [0 for _ in range(2 * len(x.shape[1:]))] + [0, pad_len]
     return functional.pad(x, pad=pad, value=pad_value)
 
@@ -38,7 +36,7 @@ def pad_collate(batch, pad_value=0):
             if not all(s == m for s in sizes):
                 # pad tensors which have a temporal dimension
                 batch = [pad_tensor(e, m, pad_value=pad_value) for e in batch]
-        return torch.stack(batch, 0)
+        return torch.stack(batch, dim=0)
     elif isinstance(elem, collections.abc.Sequence):
         # check to make sure that the elements in batch have consistent size
         it = iter(batch)

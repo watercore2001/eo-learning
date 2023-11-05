@@ -1,6 +1,6 @@
 seed_everything: 0
 
-data: ../conf/data/pastis_ser.yaml
+data: ../conf/data/pastis.yaml
 model: ../conf/model/tsvit/tsvit.yaml
 trainer: ../conf/trainer/train.yaml
 

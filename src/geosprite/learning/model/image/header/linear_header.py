@@ -2,6 +2,8 @@ from torch import nn
 import torch.nn.functional as f
 from .base_header import BaseHeader
 
+__all__ = ["LinearHeader"]
+
 
 class LinearHeader(BaseHeader):
     def __init__(self, num_classes: int, input_dim: int, scale_factor: int):
