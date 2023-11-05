@@ -16,12 +16,12 @@ def init_model():
 
 
 class LitDataModule(LuccDataModule):
-    def __init__(self):
+    def __init__(self, batch_size):
+        self.batch_size = batch_size
         dataset_args = DatasetArgs(folder="/mnt/data1/dataset/sentinel-s2-l2a/", image_size=512,
                                    num_channels=10, mask_patch_size=32, model_patch_size=4,
                                    mask_ratio=0.5, use_norm=True)
-        dataloader_args = BaseDataloaderArgs(batch_size=32, num_workers=16, pin_memory=True)
-        self.batch_size = 32
+        dataloader_args = BaseDataloaderArgs(batch_size=self.batch_size, num_workers=16, pin_memory=True)
         super().__init__(dataset_args, dataloader_args)
 
 
