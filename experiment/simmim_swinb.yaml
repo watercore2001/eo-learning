@@ -4,8 +4,10 @@ data: ../conf/data/lucc.yaml
 model: ../conf/model/simmim/pretrain_swinb.yaml
 trainer: ../conf/trainer/simmim.yaml
 
+used_ckpt_for_test: "no"
+used_ckpt_for_predict: "last"
 
 wandb_logger:
   project: simmim
-  name: swinb
-  version: swinb
+  name: swinb_root
+  version: swinb_root
