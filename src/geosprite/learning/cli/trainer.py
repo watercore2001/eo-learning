@@ -16,8 +16,11 @@ import os
 class LoggerLightningCLI(LightningCLI):
 
     def add_arguments_to_parser(self, parser: LightningArgumentParser) -> None:
-        parser.add_class_arguments(WandbLogger, "wandb_logger")
-        parser.link_arguments("trainer.default_root_dir", "wandb_logger.save_dir")
+        parser.add_argument("--used_ckpt_for_test", choices=["best", "last", "no"])
+        parser.add_argument("--used_ckpt_for_predict", choices=["best", "last", "no"])
+
+        parser.add_class_arguments(WandbLogger, nested_key="wandb_logger")
+        parser.link_arguments(source="trainer.default_root_dir", target="wandb_logger.save_dir")
         parser.set_defaults(
             {
                 "wandb_logger.project": self.model_class.__name__,
@@ -46,7 +49,14 @@ class LoggerLightningCLI(LightningCLI):
         return super().instantiate_trainer()
 
     def after_fit(self):
-        self.trainer.test(model=self.model, datamodule=self.datamodule, ckpt_path="best")
+        subcommand = self.config_init["subcommand"]
+        used_ckpt_for_test = self.config_init[subcommand]["used_ckpt_for_test"]
+        used_ckpt_for_predict = self.config_init[subcommand]["used_ckpt_for_predict"]
+
+        if used_ckpt_for_test != "no":
+            self.trainer.test(model=self.model, datamodule=self.datamodule, ckpt_path=used_ckpt_for_test)
+        if used_ckpt_for_predict != "no":
+            self.trainer.predict(model=self.model, datamodule=self.datamodule, ckpt_path=used_ckpt_for_predict)
 
 
 def main():

@@ -38,7 +38,9 @@ class SwinTransformerForSimMIM(nn.Module):
     def no_weight_decay_keywords(self):
         return {"mask_tokens"} | self.swin_transformer.no_weight_decay_keywords()
 
-    def forward(self, x: torch.Tensor, mask: torch.Tensor):
+    def forward(self, batch: dict):
+        x, mask = batch["x"], batch["mask"]
+
         b, c, h, w = x.shape
 
         # 1. patch embedding for each channel
@@ -74,7 +76,7 @@ class SwinTransformerForSimMIMDebug(SwinTransformerForSimMIM):
             embedding_dim=32,
             depth_in_stages=[2, 2],
             heads_in_stages=[4, 8],
-            out_indices=[1],
+            out_indices=[0, 1],
             mlp_ratio=1,
             dropout=0)
         super().__init__(image_channels=image_channels, patch_size=patch_size, stage_args=stage_args)
@@ -90,7 +92,7 @@ class SwinTransformerForSimMIMBase(SwinTransformerForSimMIM):
             embedding_dim=128,
             depth_in_stages=[2, 2, 18, 2],
             heads_in_stages=[4, 8, 16, 32],
-            out_indices=[3],
+            out_indices=[0, 1, 2, 3],
             mlp_ratio=4,
             dropout=0)
         super().__init__(image_channels=image_channels, patch_size=patch_size, stage_args=stages_args)

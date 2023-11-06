@@ -1,20 +1,21 @@
 import torch
 import torch.nn as nn
-from pytorch_lightning import LightningModule
+from .base_module import AdamWCosineOptimArgs, BaseModule
 from .metrics import generate_classification_metric, separate_classes_metric
 import os
 
 __all__ = ["ClassificationModule"]
 
 
-class ClassificationModule(LightningModule):
-    def __init__(self, encoder: nn.Module = None, decoder: nn.Module = None, header: nn.Module = None,
+class ClassificationModule(BaseModule):
+    def __init__(self,
+                 optim_args: AdamWCosineOptimArgs,
+                 encoder: nn.Module = None,
+                 decoder: nn.Module = None,
+                 header: nn.Module = None,
                  ignore_index: int = None):
-        super().__init__()
 
-        self.encoder = encoder
-        self.decoder = decoder
-        self.header = header
+        super().__init__(optim_args=optim_args, encoder=encoder, decoder=decoder, header=header)
 
         # important: ignore_index is the pixel value corresponding to the ignored class
         # can not use -1 to ignore the last class, -100 is the default value
@@ -35,12 +36,6 @@ class ClassificationModule(LightningModule):
 
         # must save all hyperparameters for checkpoint
         self.save_hyperparameters(logger=False)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        y_hat = self.encoder(x)
-        y_hat = self.decoder(y_hat) if self.decoder else y_hat[0]
-        y_hat = self.header(y_hat) if self.header else y_hat
-        return y_hat
 
     def training_step(self, batch: tuple[torch.Tensor, torch.Tensor], batch_index: int):
         # x: (b, c, h, w)
@@ -74,10 +69,6 @@ class ClassificationModule(LightningModule):
         y_hat = self(x)
         self.test_global_metric.update(y_hat, y)
         self.test_classes_metric.update(y_hat, y)
-
-        matrix = self.confusion_matrix(y_hat, y)
-        save_path = os.path.join(self.logger.save_dir, self.logger.name, self.logger.version, "confusion_matrix.pt")
-        torch.save(matrix, save_path)
 
     def on_test_epoch_end(self):
         global_metric_value = self.test_global_metric.compute()
