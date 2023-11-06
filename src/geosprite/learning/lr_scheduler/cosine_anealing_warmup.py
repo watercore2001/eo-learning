@@ -24,17 +24,17 @@ class CosineAnnealingWithWarmup(LRScheduler):
         self.annealing_epochs = annealing_epochs
         self.max_lr = max_lr  # max learning rate in the current cycle
         self.min_lr = min_lr  # min learning rate
-        self.current_epoch = -1
+        self.current_epoch = 0
 
         # will call self.step() in __init__
         super().__init__(optimizer)
 
     def get_lr(self):
-        assert self.current_epoch >= 0
+        assert self.current_epoch >= 1
 
         if self.current_epoch <= self.warmup_epochs:
             lr = self.max_lr * self.current_epoch / self.warmup_epochs
-        elif self.current_epoch < self.warmup_epochs + self.annealing_epochs:
+        elif self.current_epoch <= self.warmup_epochs + self.annealing_epochs:
             # 0 -> 1
             annealing_phase = (self.current_epoch - self.warmup_epochs) / self.annealing_epochs
             lr = self.min_lr + (self.max_lr - self.min_lr) * (1 + math.cos(math.pi * annealing_phase)) / 2
@@ -47,4 +47,5 @@ class CosineAnnealingWithWarmup(LRScheduler):
         self.current_epoch += 1
 
         for param_group, lr in zip(self.optimizer.param_groups, self.get_lr()):
-            param_group['lr'] = lr
+            print(lr)
+            param_group["lr"] = lr
