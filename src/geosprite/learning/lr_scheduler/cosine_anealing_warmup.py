@@ -47,5 +47,4 @@ class CosineAnnealingWithWarmup(LRScheduler):
         self.current_epoch += 1
 
         for param_group, lr in zip(self.optimizer.param_groups, self.get_lr()):
-            print(lr)
             param_group["lr"] = lr
