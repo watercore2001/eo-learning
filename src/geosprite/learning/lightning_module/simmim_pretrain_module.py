@@ -1,3 +1,5 @@
+from typing import Any
+
 from pytorch_lightning import LightningModule
 import torch
 from torch import nn
@@ -34,10 +36,10 @@ class SimMIMPreTrainingModule(LightningModule):
         y_hat = self.header(y_hat)
         return y_hat
 
-    def training_step(self, batch: tuple[torch.Tensor, torch.Tensor]):
+    def training_step(self, batch: dict):
         # x.shape: b c h w
         # mask.shape: b c new_h new_w
-        x, mask = batch
+        x, mask = batch["x"], batch["mask"]
         x_recovery = self(x, mask)
 
         all_loss = self.loss(x_recovery, x)

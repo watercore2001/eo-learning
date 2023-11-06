@@ -66,7 +66,7 @@ class MaskGenerator:
         return torch.Tensor(mask)
 
     def __call__(self):
-        mask_funcs = [self.mask_in_band, self.mask_in_band, self.mask_in_space_and_band]
+        mask_funcs = [self.mask_in_space, self.mask_in_band, self.mask_in_space_and_band]
         func = random.choice(mask_funcs)
 
         return func()

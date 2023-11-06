@@ -24,7 +24,6 @@ class DatasetArgs:
     """
     folder: str
     image_size: int
-    num_channels: int
     mask_patch_size: int
     model_patch_size: int
     mask_ratio: float
@@ -44,7 +43,7 @@ class LuccDataset(Dataset):
         self.norm_min, self.norm_max = self.init_min_max()
 
         self.mask_generator = MaskGenerator(image_size=args.image_size,
-                                            channels=args.num_channels,
+                                            channels=len(self.available_bands),
                                             mask_patch_size=args.mask_patch_size,
                                             model_patch_size=args.model_patch_size,
                                             mask_ratio=args.mask_ratio)
@@ -75,14 +74,12 @@ class LuccDataset(Dataset):
         missing_indices = [i for i, band in enumerate(self.available_bands) if band not in bands]
         return missing_indices
 
-    def get_x(self, index: int):
-        item_path = self.item_paths[index]
+    def get_x(self, item_path: str, missing_indices: list[int]):
+
         with rasterio.open(item_path) as src:
             data = src.read()
 
-        missing_indices = self.get_missing_band_indices(item_path)
         data = np.insert(data, missing_indices, values=0, axis=0)
-
         if self.use_norm:
             data = np.clip((data - self.norm_min[:, None, None]) / ((self.norm_max - self.norm_min)[:, None, None]),
                            a_min=0, a_max=1)
@@ -93,15 +90,18 @@ class LuccDataset(Dataset):
         return len(self.item_paths)
 
     def __getitem__(self, index: int):
-        x = self.get_x(index)
+        item_path = self.item_paths[index]
+        missing_indices = self.get_missing_band_indices(item_path)
+
+        x = self.get_x(item_path, missing_indices)
+
         mask = self.mask_generator()
+        # set missing band as mask
+        mask[missing_indices, :, :] = 1
 
         # x shape: c h w
         # mask shape: c patch_num_in_h patch_num_in_w
-        return x, mask
-
-
-
+        return {"x": x, "mask": mask, "tif_path": item_path}
 
 
 
