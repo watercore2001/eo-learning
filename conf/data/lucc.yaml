@@ -11,4 +11,5 @@ init_args:
     batch_size: 16
     num_workers: 64
     pin_memory: True
+    shuffle: True
 
