@@ -9,5 +9,5 @@ used_ckpt_for_predict: "last"
 
 wandb_logger:
   project: simmim
-  name: swinb_root
-  version: swinb_root
+  name: swinb_base
+  version: swinb_base
