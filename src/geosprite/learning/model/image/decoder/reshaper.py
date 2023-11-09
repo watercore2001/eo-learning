@@ -17,7 +17,7 @@ class ReshapeDecoder(nn.Module):
             nn.Linear(dim, out_dim * 4 ** i),
             # same order with patch embedding
             Rearrange(
-                "b patch_num_in_h patch_num_in_w (out_dim patch_size_in_h patch_size_in_w) -> "
+                pattern="b patch_num_in_h patch_num_in_w (out_dim patch_size_in_h patch_size_in_w) -> "
                 "b out_dim (patch_num_in_h patch_size_in_h) (patch_num_in_w patch_size_in_w) ",
                 patch_size_in_h=2 ** i, patch_size_in_w=2 ** i)
         ) for i, dim in enumerate(dims_in_stages)])

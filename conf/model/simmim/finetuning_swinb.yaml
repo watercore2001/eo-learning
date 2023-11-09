@@ -1,0 +1,17 @@
+class_path: geosprite.learning.lightning_module.SimMIMFineTuningModule
+init_args:
+  pretrain_ckpt_path: /home/xials/code/eo-learning/workspace/simmim/swinb_base/checkpoints/last.ckpt
+  decoder:
+    class_path: geosprite.learning.model.image.decoder.UPerDecoderForSwinB
+  header:
+    class_path: geosprite.learning.model.image.header.ReshapeHeader
+    init_args:
+      embedding_dim: 512
+      num_classes: 2
+      scale_factor: 4
+  optim_args:
+    weight_decay: 0.05
+    warmup_epochs: 5
+    annealing_epochs: 5
+    max_lr: 1e-4
+    min_lr: 1e-5

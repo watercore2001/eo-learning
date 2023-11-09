@@ -1,13 +1,13 @@
 seed_everything: 0
 
-data: ../conf/data/lucc.yaml
-model: ../conf/model/simmim/pretrain_swinb.yaml
-trainer: ../conf/trainer/simmim.yaml
+data: ../conf/data/simmim_pretrain.yaml
+model: ../conf/model/simmim_pretrain/pretrain_swinb.yaml
+trainer: ../conf/trainer/simmim_pretrain.yaml
 
 used_ckpt_for_test: "no"
 used_ckpt_for_predict: "last"
 
 wandb_logger:
-  project: simmim
+  project: simmim_pretrain
   name: swinb_base
   version: swinb_base

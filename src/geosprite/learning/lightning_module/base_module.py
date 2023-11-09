@@ -32,8 +32,8 @@ class BaseModule(LightningModule):
         # must save all hyperparameters for checkpoint
         self.save_hyperparameters(logger=False)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        y_hat = self.encoder(x)
+    def forward(self, batch: dict) -> torch.Tensor:
+        y_hat = self.encoder(batch)
         y_hat = self.decoder(y_hat) if self.decoder else y_hat[-1]
         y_hat = self.header(y_hat) if self.header else y_hat
         return y_hat

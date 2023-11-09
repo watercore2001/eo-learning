@@ -34,7 +34,7 @@ class PyramidPoolingModule(nn.Module):
         _, _, h, w = x.size()
 
         ppm_outs = [x] + [nn.functional.interpolate(input=pool(x), size=(h, w), mode='bilinear') for pool in self.ppm]
-        ppm_outs = torch.cat(ppm_outs, 1)
+        ppm_outs = torch.cat(ppm_outs, dim=1)
         return self.output_conv(ppm_outs)
 
 
@@ -55,16 +55,6 @@ class UPerDecoder(nn.Module):
         return x
 
 
-def main():
-    decoder = UPerDecoder(input_dims=[64, 128, 256, 512], output_dim=512, pool_scales=[1, 2, 3, 6])
-    x1 = torch.randn(size=[2, 64, 128, 128])
-    x2 = torch.randn(size=[2, 128, 64, 64])
-    x3 = torch.randn(size=[2, 256, 32, 32])
-    x4 = torch.randn(size=[2, 512, 16, 16])
-    x = [x1, x2, x3, x4]
-
-    x = decoder(x)
-
-
-if __name__ == "__main__":
-    main()
+class UPerDecoderForSwinB(UPerDecoder):
+    def __init__(self):
+        super().__init__(input_dims=[128, 256, 512, 1024], output_dim=512, pool_scales=[1, 2, 3, 6])

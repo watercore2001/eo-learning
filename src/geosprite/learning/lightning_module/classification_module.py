@@ -37,18 +37,16 @@ class ClassificationModule(BaseModule):
         # must save all hyperparameters for checkpoint
         self.save_hyperparameters(logger=False)
 
-    def training_step(self, batch: tuple[torch.Tensor, torch.Tensor], batch_index: int):
-        # x: (b, c, h, w)
-        # y: (b, h, w)
-        x, y = batch
-        y_hat = self(x)
+    def training_step(self, batch: dict, batch_index: int):
+        y_hat = self(batch)
+        y = batch["y"]
         loss = self.cross_entropy_loss(y_hat, y)
         self.log(name="train_loss", value=loss, sync_dist=True)
         return loss
 
-    def validation_step(self, batch: tuple[torch.Tensor, torch.Tensor], batch_index: int):
-        x, y = batch
-        y_hat = self(x)
+    def validation_step(self, batch: dict, batch_index: int):
+        y_hat = self(batch)
+        y = batch["y"]
         loss = self.cross_entropy_loss(y_hat, y)
         self.log(name="val_loss", value=loss, sync_dist=True)
         self.val_global_metric.update(y_hat, y)
@@ -64,9 +62,9 @@ class ClassificationModule(BaseModule):
         self.val_global_metric.reset()
         self.val_classes_metric.reset()
 
-    def test_step(self, batch: tuple[torch.Tensor, torch.Tensor], batch_index: int):
-        x, y = batch
-        y_hat = self(x)
+    def test_step(self, batch: dict, batch_index: int):
+        y_hat = self(batch)
+        y = batch["y"]
         self.test_global_metric.update(y_hat, y)
         self.test_classes_metric.update(y_hat, y)
 

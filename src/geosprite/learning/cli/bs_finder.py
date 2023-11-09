@@ -2,7 +2,7 @@ from geosprite.learning.lightning_module import SimMIMPreTrainingModule, SimMIMO
 from geosprite.learning.model.image.encoder import SwinTransformerForSimMIMBase
 from geosprite.learning.model.image.header import ReshapeHeaderForSwinBase
 
-from geosprite.learning.lightning_datamodule.lucc import DatasetArgs, LuccDataset
+from geosprite.learning.lightning_datamodule.lucc import PretrainDatasetArgs, LuccPretrainDataset
 
 import torch
 from pytorch_lightning import Trainer
@@ -17,10 +17,10 @@ class LitModule(SimMIMPreTrainingModule):
         optim_args = SimMIMOptimArgs(weight_decay=0.05, warmup_epochs=10, annealing_epochs=90, max_lr=1e-4, min_lr=1e-5)
         super().__init__(encoder=encoder, header=header, optim_args=optim_args)
         self.batch_size = batch_size
-        dataset_args = DatasetArgs(folder="/mnt/data1/dataset/sentinel-s2-l2a/", image_size=512,
-                                   num_channels=10, mask_patch_size=32, model_patch_size=4,
-                                   mask_ratio=0.5, use_norm=True)
-        self.train_dataset = LuccDataset(dataset_args)
+        dataset_args = PretrainDatasetArgs(folder="/mnt/data1/dataset/sentinel-s2-l2a/", image_size=512,
+                                           num_channels=10, mask_patch_size=32, model_patch_size=4,
+                                           mask_ratio=0.5, use_norm=True)
+        self.train_dataset = LuccPretrainDataset(dataset_args)
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, batch_size=self.batch_size | self.hparams.batch_size)
