@@ -1,0 +1,12 @@
+class_path: geosprite.learning.lightning_datamodule.LuccFineTuningDataModule
+init_args:
+  dataset_args:
+    folder: /mnt/data1/dataset/water_stack
+    image_size: 512
+    model_patch_size: 4
+    use_norm: True
+  dataloader_args:
+    batch_size: 16
+    num_workers: 0
+    pin_memory: True
+    shuffle: True

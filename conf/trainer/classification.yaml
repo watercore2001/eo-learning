@@ -1,6 +1,6 @@
 devices: 8
 accelerator: gpu
-max_epochs: 100
+max_epochs: 200
 logger: True
 default_root_dir: /home/xials/project/workspace
 profiler: simple
