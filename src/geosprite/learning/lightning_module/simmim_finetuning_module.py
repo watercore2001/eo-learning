@@ -38,10 +38,13 @@ class SimMIMFineTuningModule(ClassificationModule):
         y_hat = y_hat.cpu().numpy()
         for i, tif_path in enumerate(batch["tif_path"]):
             with rasterio.open(tif_path) as src:
+                mask = src.read_masks(1)
                 profile = src.profile
                 profile.update(dtype=rasterio.ubyte, count=1)
             output_path = get_output_path(tif_path)
             with rasterio.open(output_path, "w", **profile) as dst:
-                dst.write(y_hat[i], 1)
+                data = y_hat[i]
+                dst.write(data, 1)
+                dst.write_mask(mask)
 
 
