@@ -50,18 +50,21 @@ class LuccFineTuningDataModule(LightningDataModule):
         self.train_dataset = None
         self.val_dataset = None
         self.test_dataset = None
+        self.predict_dataset = None
 
-    def make_dataset(self, sub_folder_name: str):
+    def make_dataset_args(self, sub_folder_name: str):
         sub_folder = os.path.join(self.dataset_args.folder, sub_folder_name)
         dataset_args = dataclasses.replace(self.dataset_args, folder=sub_folder)
-        return LuccFineTuningDataset(dataset_args)
+        return dataset_args
 
     def setup(self, stage: [str] = None):
         if stage == "fit":
-            self.train_dataset = self.make_dataset("train")
-            self.val_dataset = self.make_dataset("val")
+            self.train_dataset = LuccFineTuningDataset(self.make_dataset_args("train"))
+            self.val_dataset = LuccFineTuningDataset(self.make_dataset_args("val"))
         if stage == "test":
-            self.test_dataset = self.make_dataset("test")
+            self.test_dataset = LuccFineTuningDataset(self.make_dataset_args("test"))
+        if stage == "predict":
+            self.predict_dataset = LuccPredictDataset(self.make_dataset_args("predict"))
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, **dataclasses.asdict(self.dataloader_args))
@@ -73,5 +76,9 @@ class LuccFineTuningDataModule(LightningDataModule):
     def test_dataloader(self):
         dataloader_args = dataclasses.replace(self.dataloader_args, shuffle=False)
         return DataLoader(self.test_dataset, **dataclasses.asdict(dataloader_args))
+
+    def predict_dataloader(self):
+        dataloader_args = dataclasses.replace(self.dataloader_args, shuffle=False)
+        return DataLoader(self.predict_dataset, **dataclasses.asdict(dataloader_args))
 
 

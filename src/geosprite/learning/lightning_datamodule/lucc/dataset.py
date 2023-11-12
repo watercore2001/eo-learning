@@ -11,7 +11,7 @@ from einops import rearrange
 
 from .mask_generator import MaskGenerator
 
-__all__ = ["PretrainDatasetArgs", "LuccPretrainDataset", "FineTuningDatasetArgs", "LuccFineTuningDataset"]
+__all__ = ["PretrainDatasetArgs", "LuccPretrainDataset", "FineTuningDatasetArgs", "LuccFineTuningDataset", "LuccPredictDataset"]
 
 
 class LuccBaseDataset(Dataset):
@@ -187,6 +187,51 @@ class LuccFineTuningDataset(LuccBaseDataset):
 
         # x and y shape: c h w
         return {"x": x, "mask": mask, "y": y}
+
+
+class LuccPredictDataset(LuccBaseDataset):
+    sat_name = "sat"
+
+    def __init__(self, args: FineTuningDatasetArgs):
+        super().__init__()
+        self.folder = args.folder
+        self.sat_folder = os.path.join(args.folder, self.sat_name)
+
+        self.image_size = args.image_size
+        self.model_patch_size = args.model_patch_size
+        self.image_size_in_patch_unit = self.image_size // self.model_patch_size
+
+        self.use_norm = args.use_norm
+
+        self.item_paths = self.init_item_paths()
+        norm_data_path = os.path.join(self.sat_folder, self.norm_filename)
+        self.norm_min, self.norm_max = self.init_min_max(norm_data_path)
+
+    def init_item_paths(self) -> list:
+        item_paths = []
+
+        for rel_path in glob.glob(pathname=f"*/*.tif", root_dir=self.sat_folder):
+            sat_path = os.path.join(self.sat_folder, rel_path)
+            item_paths.append(sat_path)
+        return item_paths
+
+    def __getitem__(self, index: int):
+        sat_path = self.item_paths[index]
+
+        bands = self.get_bands(sat_path)
+        x = self.get_x(sat_path, bands)
+
+        mask = np.zeros(shape=(len(self.available_bands), self.image_size_in_patch_unit, self.image_size_in_patch_unit))
+        missing_indices = [i for i, band in enumerate(self.available_bands) if band not in bands]
+        mask[missing_indices, :, :] = 1
+        mask = torch.Tensor(mask)
+
+        # x and y shape: c h w
+        return {"x": x, "mask": mask, "tif_path": sat_path}
+
+
+
+
 
 
 

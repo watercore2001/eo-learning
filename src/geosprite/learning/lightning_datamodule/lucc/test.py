@@ -1,6 +1,12 @@
 import numpy as np
 from geosprite.learning.lightning_datamodule.lucc.dataset import *
 
-dataset = LuccFineTuningDataset(FineTuningDatasetArgs(use_norm=True, folder="/mnt/dataset/building_stack/train"))
-for data in dataset:
-    pass
+
+
+if __name__ == "__main__":
+    from torch.utils.data import DataLoader
+    dataset = LuccPredictDataset(FineTuningDatasetArgs(folder="/mnt/data/dataset/water_predict", image_size=512,
+                                                       model_patch_size=4, use_norm=True))
+    dataloader = DataLoader(dataset=dataset, batch_size=4)
+    for batch in dataloader:
+        pass
