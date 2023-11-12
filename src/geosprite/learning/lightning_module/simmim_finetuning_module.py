@@ -44,7 +44,7 @@ class SimMIMFineTuningModule(ClassificationModule):
             output_path = get_output_path(tif_path)
             with rasterio.open(output_path, "w", **profile) as dst:
                 data = y_hat[i]
+                data[mask == 0] = 0
                 dst.write(data, 1)
-                dst.write_mask(mask)
 
 
