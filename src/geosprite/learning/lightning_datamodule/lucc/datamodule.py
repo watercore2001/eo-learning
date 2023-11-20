@@ -50,7 +50,9 @@ class LuccFineTuningDataModule(LightningDataModule):
         self.train_dataset = None
         self.val_dataset = None
         self.test_dataset = None
+        self.image_arrays = None
         self.predict_dataset = None
+        self.batch_size = None
 
     def make_dataset_args(self, sub_folder_name: str):
         sub_folder = os.path.join(self.dataset_args.folder, sub_folder_name)
@@ -64,7 +66,13 @@ class LuccFineTuningDataModule(LightningDataModule):
         if stage == "test":
             self.test_dataset = LuccFineTuningDataset(self.make_dataset_args("test"))
         if stage == "predict":
-            self.predict_dataset = LuccPredictDataset(self.make_dataset_args("predict"))
+            predict_args = PredictDatasetArgs(image_arrays=self.image_arrays,
+                                              image_size=self.train_dataset.image_size,
+                                              model_patch_size=self.train_dataset.model_patch_size,
+                                              use_norm=self.train_dataset.use_norm,
+                                              norm_min=self.train_dataset.norm_min,
+                                              norm_max=self.train_dataset.norm_max)
+            self.predict_dataset = LuccPredictDataset(predict_args)
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, **dataclasses.asdict(self.dataloader_args))
@@ -78,7 +86,7 @@ class LuccFineTuningDataModule(LightningDataModule):
         return DataLoader(self.test_dataset, **dataclasses.asdict(dataloader_args))
 
     def predict_dataloader(self):
-        dataloader_args = dataclasses.replace(self.dataloader_args, shuffle=False)
+        dataloader_args = dataclasses.replace(self.dataloader_args, shuffle=False, batch_size=self.batch_size)
         return DataLoader(self.predict_dataset, **dataclasses.asdict(dataloader_args))
 
 

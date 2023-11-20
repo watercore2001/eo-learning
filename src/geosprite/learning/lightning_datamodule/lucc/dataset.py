@@ -11,17 +11,27 @@ from einops import rearrange
 
 from .mask_generator import MaskGenerator
 
-__all__ = ["PretrainDatasetArgs", "LuccPretrainDataset", "FineTuningDatasetArgs", "LuccFineTuningDataset", "LuccPredictDataset"]
+__all__ = ["PretrainDatasetArgs", "LuccPretrainDataset", "FineTuningDatasetArgs", "LuccFineTuningDataset",
+           "PredictDatasetArgs", "LuccPredictDataset"]
 
 
 class LuccBaseDataset(Dataset):
+    available_bands = ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B8A", "B11", "B12"]
+
     def __init__(self):
         self.use_norm = True
         self.norm_min = None
         self.norm_max = None
+        self.bands = None
+        self.image_size = None
+        self.model_patch_size = None
+
+
+class LuccFileDataset(LuccBaseDataset):
+    def __init__(self):
+        super().__init__()
         self.item_paths = []
 
-    available_bands = ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B8A", "B11", "B12"]
     norm_filename = "norm.json"
     metadata_filename = "metadata.json"
 
@@ -44,14 +54,14 @@ class LuccBaseDataset(Dataset):
     def __len__(self):
         return len(self.item_paths)
 
-    def get_x(self, item_path: str, bands: list[str]):
+    def get_x(self, item_path: str):
         with rasterio.open(item_path) as src:
             data = src.read()
 
         all_shape = (len(self.available_bands),) + data.shape[1:]
         all_data = np.zeros(shape=all_shape)
 
-        band_indices = [self.available_bands.index(band) for band in bands]
+        band_indices = [self.available_bands.index(band) for band in self.bands]
         all_data[band_indices, :, :] = data
 
         if self.use_norm:
@@ -88,7 +98,7 @@ class PretrainDatasetArgs:
     use_norm: bool = True
 
 
-class LuccPretrainDataset(LuccBaseDataset):
+class LuccPretrainDataset(LuccFileDataset):
     def __init__(self, args: PretrainDatasetArgs):
         super().__init__()
         self.folder = args.folder
@@ -115,13 +125,13 @@ class LuccPretrainDataset(LuccBaseDataset):
 
     def __getitem__(self, index: int):
         item_path = self.item_paths[index]
-        bands = self.get_bands(item_path)
+        self.bands = self.get_bands(item_path)
 
-        x = self.get_x(item_path, bands)
+        x = self.get_x(item_path)
 
         mask = self.mask_generator()
         # set missing band as mask
-        missing_indices = [i for i, band in enumerate(self.available_bands) if band not in bands]
+        missing_indices = [i for i, band in enumerate(self.available_bands) if band not in self.bands]
         mask[missing_indices, :, :] = 1
 
         # x shape: c h w
@@ -143,7 +153,7 @@ class FineTuningDatasetArgs:
     use_norm: bool = True
 
 
-class LuccFineTuningDataset(LuccBaseDataset):
+class LuccFineTuningDataset(LuccFileDataset):
     sat_name = "sat"
     gt_name = "gt"
 
@@ -175,11 +185,11 @@ class LuccFineTuningDataset(LuccBaseDataset):
     def __getitem__(self, index: int):
         sat_path, gt_path = self.item_paths[index]
 
-        bands = self.get_bands(sat_path)
-        x = self.get_x(sat_path, bands)
+        self.bands = self.get_bands(sat_path)
+        x = self.get_x(sat_path)
 
         mask = np.zeros(shape=(len(self.available_bands), self.image_size_in_patch_unit, self.image_size_in_patch_unit))
-        missing_indices = [i for i, band in enumerate(self.available_bands) if band not in bands]
+        missing_indices = [i for i, band in enumerate(self.available_bands) if band not in self.bands]
         mask[missing_indices, :, :] = 1
         mask = torch.Tensor(mask)
 
@@ -189,45 +199,65 @@ class LuccFineTuningDataset(LuccBaseDataset):
         return {"x": x, "mask": mask, "y": y}
 
 
+@dataclasses.dataclass
+class PredictDatasetArgs:
+    """
+    image_arrays: Path to the dataset
+    image_size: model input image size
+    model_patch_size: model patch size
+    use_norm: If true, images are standardised using pre-computed channel-wise min and max value.
+    norm_mix:
+    norm_max:
+    """
+    image_arrays: list[np.ndarray]
+    image_size: int
+    model_patch_size: int
+    use_norm: bool
+    norm_min: np.ndarray = None
+    norm_max: np.ndarray = None
+
+
 class LuccPredictDataset(LuccBaseDataset):
-    sat_name = "sat"
 
-    def __init__(self, args: FineTuningDatasetArgs):
+    def __init__(self, args: PredictDatasetArgs):
         super().__init__()
-        self.folder = args.folder
-        self.sat_folder = os.path.join(args.folder, self.sat_name)
 
+        self.image_arrays = args.image_arrays
         self.image_size = args.image_size
         self.model_patch_size = args.model_patch_size
         self.image_size_in_patch_unit = self.image_size // self.model_patch_size
-
         self.use_norm = args.use_norm
 
-        self.item_paths = self.init_item_paths()
-        norm_data_path = os.path.join(self.sat_folder, self.norm_filename)
-        self.norm_min, self.norm_max = self.init_min_max(norm_data_path)
+        if self.use_norm:
+            self.norm_min = args.norm_min
+            self.norm_max = args.norm_max
 
-    def init_item_paths(self) -> list:
-        item_paths = []
+    def get_x(self, index: int):
+        data = self.image_arrays[index]
 
-        for rel_path in glob.glob(pathname=f"*/*.tif", root_dir=self.sat_folder):
-            sat_path = os.path.join(self.sat_folder, rel_path)
-            item_paths.append(sat_path)
-        return item_paths
+        all_shape = (len(self.available_bands),) + data.shape[1:]
+        all_data = np.zeros(shape=all_shape)
+
+        band_indices = [self.available_bands.index(band) for band in self.bands]
+        all_data[band_indices, :, :] = data
+
+        if self.use_norm:
+            all_data = np.clip((all_data - self.norm_min[:, None, None])
+                               / ((self.norm_max - self.norm_min)[:, None, None]),
+                               a_min=0, a_max=1)
+
+        return torch.Tensor(all_data)
 
     def __getitem__(self, index: int):
-        sat_path = self.item_paths[index]
 
-        bands = self.get_bands(sat_path)
-        x = self.get_x(sat_path, bands)
-
+        x = self.get_x(index)
         mask = np.zeros(shape=(len(self.available_bands), self.image_size_in_patch_unit, self.image_size_in_patch_unit))
-        missing_indices = [i for i, band in enumerate(self.available_bands) if band not in bands]
+        missing_indices = [i for i, band in enumerate(self.available_bands) if band not in self.bands]
         mask[missing_indices, :, :] = 1
         mask = torch.Tensor(mask)
 
         # x and y shape: c h w
-        return {"x": x, "mask": mask, "tif_path": sat_path}
+        return {"x": x, "mask": mask}
 
 
 
