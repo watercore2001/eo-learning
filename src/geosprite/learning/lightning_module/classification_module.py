@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from .base_module import AdamWCosineOptimArgs, BaseModule
 from .metrics import generate_classification_metric, separate_classes_metric
-import os
+from typing import Any
 
 __all__ = ["ClassificationModule"]
 
@@ -77,3 +77,8 @@ class ClassificationModule(BaseModule):
 
         self.test_global_metric.reset()
         self.test_classes_metric.reset()
+
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        y_hat = self(batch)
+        y_hat = torch.argmax(y_hat, dim=1).to(torch.uint8)
+        return y_hat
