@@ -1,7 +1,8 @@
 from pytorch_lightning import LightningDataModule
 import dataclasses
 import os
-
+import json
+import numpy as np
 from torch.utils.data import DataLoader
 from .dataset import *
 from ..base_dataloader import BaseDataloaderArgs
@@ -9,11 +10,26 @@ from ..base_dataloader import BaseDataloaderArgs
 __all__ = ["LuccPretrainDataModule", "LuccFineTuningDataModule"]
 
 
-class LuccPretrainDataModule(LightningDataModule):
-    def __init__(self,
-                 dataset_args: PretrainDatasetArgs,
-                 dataloader_args: BaseDataloaderArgs):
+class LuccBaseDataModule(LightningDataModule):
+    metadata_filename = "metadata.json"
+
+    def __init__(self, dataset_args: LuccFileDatasetArgs):
         super().__init__()
+        metadata_path = os.path.join(dataset_args.folder, self.metadata_filename)
+        with open(metadata_path) as file:
+            metadata = json.load(file)
+            dataset_args.bands = metadata["bands"]
+            norm_data_dict = metadata["norm"]
+            dataset_args.norm_min = np.array([0 for _ in norm_data_dict.values()])
+            dataset_args.norm_max = np.array([value["max"] for value in norm_data_dict.values()])
+
+
+class LuccPretrainDataModule(LuccBaseDataModule):
+    def __init__(self,
+                 dataset_args: LuccPretrainDatasetArgs,
+                 dataloader_args: BaseDataloaderArgs):
+        super().__init__(dataset_args)
+
         self.dataset_args = dataset_args
         self.dataloader_args = dataloader_args
 
@@ -39,20 +55,25 @@ class LuccPretrainDataModule(LightningDataModule):
         return DataLoader(self.predict_dataset, **dataclasses.asdict(dataloader_args))
 
 
-class LuccFineTuningDataModule(LightningDataModule):
+class LuccFineTuningDataModule(LuccBaseDataModule):
     def __init__(self,
-                 dataset_args: FineTuningDatasetArgs,
-                 dataloader_args: BaseDataloaderArgs):
-        super().__init__()
+                 dataset_args: LuccFileDatasetArgs,
+                 dataloader_args: BaseDataloaderArgs,
+                 batch_size: int = None):
+        super().__init__(dataset_args)
         self.dataset_args = dataset_args
         self.dataloader_args = dataloader_args
 
         self.train_dataset = None
         self.val_dataset = None
         self.test_dataset = None
-        self.image_arrays = None
         self.predict_dataset = None
-        self.batch_size = None
+
+        self.image_arrays = None
+        self.batch_size = batch_size
+
+        # must save all hyperparameters for checkpoint
+        self.save_hyperparameters(logger=False)
 
     def make_dataset_args(self, sub_folder_name: str):
         sub_folder = os.path.join(self.dataset_args.folder, sub_folder_name)
@@ -66,12 +87,12 @@ class LuccFineTuningDataModule(LightningDataModule):
         if stage == "test":
             self.test_dataset = LuccFineTuningDataset(self.make_dataset_args("test"))
         if stage == "predict":
-            predict_args = PredictDatasetArgs(image_arrays=self.image_arrays,
-                                              image_size=self.train_dataset.image_size,
-                                              model_patch_size=self.train_dataset.model_patch_size,
-                                              use_norm=self.train_dataset.use_norm,
-                                              norm_min=self.train_dataset.norm_min,
-                                              norm_max=self.train_dataset.norm_max)
+            predict_args = LuccPredictDatasetArgs(image_arrays=self.image_arrays,
+                                                  bands=self.dataset_args.bands,
+                                                  image_size=self.dataset_args.image_size,
+                                                  model_patch_size=self.dataset_args.model_patch_size,
+                                                  norm_min=self.dataset_args.norm_min,
+                                                  norm_max=self.dataset_args.norm_max)
             self.predict_dataset = LuccPredictDataset(predict_args)
 
     def train_dataloader(self):
@@ -88,5 +109,3 @@ class LuccFineTuningDataModule(LightningDataModule):
     def predict_dataloader(self):
         dataloader_args = dataclasses.replace(self.dataloader_args, shuffle=False, batch_size=self.batch_size)
         return DataLoader(self.predict_dataset, **dataclasses.asdict(dataloader_args))
-
-

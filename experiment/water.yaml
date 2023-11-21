@@ -9,5 +9,5 @@ used_ckpt_for_predict: "no"
 
 wandb_logger:
   project: simmim_water
-  name: swinb_base
-  version: swinb_base
+  name: swinb_base_ckpt
+  version: swinb_base_ckpt
