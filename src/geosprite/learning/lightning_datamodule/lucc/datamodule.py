@@ -73,7 +73,7 @@ class LuccFineTuningDataModule(LuccBaseDataModule):
         self.batch_size = batch_size
 
         # must save all hyperparameters for checkpoint
-        self.save_hyperparameters(logger=False)
+        self.save_hyperparameters()
 
     def make_dataset_args(self, sub_folder_name: str):
         sub_folder = os.path.join(self.dataset_args.folder, sub_folder_name)
