@@ -2,12 +2,12 @@ devices: 8
 accelerator: gpu
 max_epochs: 200
 logger: True
-default_root_dir: /home/xials/project/workspace
+default_root_dir: "/home/xials/code/eo-learning/workspace/"
 profiler: simple
 callbacks:
   - class_path: pytorch_lightning.callbacks.ModelCheckpoint
     init_args:
-      filename: '{epoch:03d}_{val_jaccardindex_macro:.4f}_{val_accuracy_micro:.4f}'
+      filename: "{epoch:03d}_{val_jaccardindex_macro:.4f}_{val_accuracy_micro:.4f}"
       monitor: val_jaccardindex_macro
       mode: max
       save_last: True

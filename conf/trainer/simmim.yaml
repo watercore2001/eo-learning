@@ -1,5 +1,5 @@
-accelerator: gpu
 devices: 8
+accelerator: gpu
 max_epochs: 200
 logger: True
 default_root_dir: "/home/xials/code/eo-learning/workspace/"
