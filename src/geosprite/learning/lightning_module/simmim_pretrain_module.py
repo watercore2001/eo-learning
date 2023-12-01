@@ -1,6 +1,7 @@
 import os.path
-from typing import Any
+from typing import Any, Optional
 import numpy as np
+from pytorch_lightning.utilities.types import STEP_OUTPUT
 from torch import nn
 from einops import repeat
 
@@ -31,14 +32,35 @@ class SimMIMPreTrainingModule(BaseModule):
         # 0 value in x means nodata, model cannot recover it
         loss_mask = (mask == 1) & (x != 0)
         mask_loss = (all_loss * loss_mask).sum() / loss_mask.sum()
-        self.log(name="mask_loss", value=mask_loss, on_step=True, sync_dist=True)
+        self.log(name="train_mask_loss", value=mask_loss, on_step=True, sync_dist=True)
 
         loss_mask = (x != 0)
         global_loss = (all_loss * loss_mask).sum() / loss_mask.sum()
-        self.log(name="global_loss", value=global_loss, on_step=True, sync_dist=True)
+        self.log(name="train_global_loss", value=global_loss, on_step=True, sync_dist=True)
 
         # use mask loss for gradient descent
         return mask_loss
+
+    def validation_step(self, batch: dict):
+        x_recover = self(batch)
+
+        # x.shape: b c h w
+        # mask.shape: b c new_h new_w
+        x, mask = batch["x"], batch["mask"]
+
+        all_loss = self.l1_loss(x_recover, x)
+        mask = repeat(mask, pattern="b c new_h new_w -> b c (new_h patch_size1) (new_w patch_size2)",
+                      patch_size1=self.patch_size,
+                      patch_size2=self.patch_size)
+
+        # 0 value in x means nodata, model cannot recover it
+        loss_mask = (mask == 1) & (x != 0)
+        mask_loss = (all_loss * loss_mask).sum() / loss_mask.sum()
+        self.log(name="val_mask_loss", value=mask_loss, on_epoch=True, sync_dist=True)
+
+        loss_mask = (x != 0)
+        global_loss = (all_loss * loss_mask).sum() / loss_mask.sum()
+        self.log(name="val_global_loss", value=global_loss, on_epoch=True, sync_dist=True)
 
     def predict_step(self, batch: dict, batch_idx: int, dataloader_idx: int = 0) -> Any:
         def get_output_path(tif_path_):

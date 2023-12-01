@@ -21,6 +21,16 @@ class PreNorm(nn.Module):
         return self.layer(self.norm(x), **kwargs)
 
 
+class PostNorm(nn.Module):
+    def __init__(self, embedding_dim: int, layer: nn.Module):
+        super().__init__()
+        self.norm = nn.LayerNorm(embedding_dim)
+        self.layer = layer
+
+    def forward(self, x: torch.Tensor, **kwargs):
+        return self.norm(self.layer(x, **kwargs))
+
+
 class Attention(nn.Module):
     """ Self-Attention Layer in Attention is all you need
     """
@@ -58,6 +68,50 @@ class Attention(nn.Module):
             attn = attn.softmax(dim=-1)
             attn = self.dropout(attn)
             x = einsum(attn, v, 'b n l1 l2, b n l2 d -> b n l1 d')
+        x = rearrange(x, pattern="b n l d -> b l (n d)")
+        x = self.output(x)
+        return x
+
+
+class CosineAttention(nn.Module):
+    def __init__(self, embedding_dim, heads, head_dim, dropout):
+        super().__init__()
+        inner_dim = head_dim * heads
+
+        self.heads = heads
+        self.scale = head_dim ** -0.5
+        self.to_qkv = nn.Linear(embedding_dim, inner_dim * 3, bias=False)
+
+        # init as log(10)
+        self.logit_scale = nn.Parameter(torch.log(10 * torch.ones((heads, 1, 1))), requires_grad=True)
+
+        self.output = nn.Linear(inner_dim, embedding_dim)
+        self.dropout_rate = dropout
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, x: torch.Tensor, attn_mask: torch.Tensor = None):
+        """
+        Args:
+            x: (b, l, c)
+            attn_mask: (b, h, l, l)
+
+        Returns:
+            (b, l, c)
+        """
+        b, l, _ = x.size()
+        qkv = self.to_qkv(x).chunk(3, dim=-1)
+        q, k, v = map(lambda t: rearrange(t, pattern="b l (n d) -> b n l d", n=self.heads), qkv)
+        # cosine attention
+        q = functional.normalize(q, dim=-1)
+        k = functional.normalize(k, dim=-1)
+        # make the value is between [0, 100]
+        logit_scale = torch.clamp(self.logit_scale, max=torch.log(torch.tensor(1. / 0.01))).exp()
+        attn = einsum(q, k, "b n l1 d, b n l2 d -> b n l1 l2").mul(logit_scale)
+
+        attn += attn_mask if attn_mask is not None else 0
+        attn = attn.softmax(dim=-1)
+        attn = self.dropout(attn)
+        x = einsum(attn, v, 'b n l1 l2, b n l2 d -> b n l1 d')
         x = rearrange(x, pattern="b n l d -> b l (n d)")
         x = self.output(x)
         return x

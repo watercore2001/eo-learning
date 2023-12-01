@@ -1,5 +1,4 @@
 import dataclasses
-import json
 import os
 
 import numpy as np
@@ -8,18 +7,23 @@ import rasterio
 from torch.utils.data import Dataset
 import glob
 from einops import rearrange
+from torchvision.transforms import v2
 
 from .mask_generator import MaskGenerator
 
-__all__ = ["LuccPretrainDatasetArgs", "LuccPretrainDataset", "LuccFileDatasetArgs", "LuccFineTuningDataset",
+__all__ = ["LuccBaseDatasetArgs",
+           "LuccPretrainDatasetArgs", "LuccPretrainDataset",
+           "LuccFineTuningDatasetArgs", "LuccFineTuningDataset",
            "LuccPredictDatasetArgs", "LuccPredictDataset"]
 
 
 @dataclasses.dataclass(kw_only=True)
 class LuccBaseDatasetArgs:
-    bands: list[str] = None
     image_size: int
     model_patch_size: int
+    use_aug: bool
+    # do not need input
+    bands: list[str] = None
     norm_min: np.ndarray = None
     norm_max: np.ndarray = None
 
@@ -54,15 +58,9 @@ class LuccBaseDataset(Dataset):
         return torch.Tensor(all_data)
 
 
-@dataclasses.dataclass(kw_only=True)
-class LuccFileDatasetArgs(LuccBaseDatasetArgs):
-    folder: str
-
-
 class LuccFileDataset(LuccBaseDataset):
-    def __init__(self, args: LuccFileDatasetArgs):
+    def __init__(self, args: LuccBaseDatasetArgs):
         super().__init__(args)
-        self.folder = args.folder
         self.item_paths = []
 
     def __len__(self):
@@ -83,11 +81,13 @@ class LuccFileDataset(LuccBaseDataset):
 
 
 @dataclasses.dataclass(kw_only=True)
-class LuccPretrainDatasetArgs(LuccFileDatasetArgs):
+class LuccPretrainDatasetArgs(LuccBaseDatasetArgs):
     """
+    folders: pretrain image is distributed in multi folder
     mask_patch_size: mask patch size
     mask_ratio: mask ratio
     """
+    folders: list[str]
     mask_patch_size: int
     mask_ratio: float
 
@@ -95,7 +95,8 @@ class LuccPretrainDatasetArgs(LuccFileDatasetArgs):
 class LuccPretrainDataset(LuccFileDataset):
     def __init__(self, args: LuccPretrainDatasetArgs):
         super().__init__(args)
-
+        self.folders = args.folders
+        self.use_aug = args.use_aug
         self.item_paths = self.init_item_paths()
         self.mask_generator = MaskGenerator(image_size=args.image_size,
                                             channels=len(self.available_bands),
@@ -103,13 +104,24 @@ class LuccPretrainDataset(LuccFileDataset):
                                             model_patch_size=args.model_patch_size,
                                             mask_ratio=args.mask_ratio)
 
+    def image_transform(self, x: np.ndarray) -> torch.Tensor:
+        all_data = super().image_transform(x)
+        if self.use_aug:
+            aug_transform = v2.Compose([
+                v2.RandomHorizontalFlip(p=0.5),
+                v2.RandomVerticalFlip(p=0.5)
+            ])
+            all_data = aug_transform(all_data)
+        return all_data
+
     def init_item_paths(self) -> list:
         item_paths = []
-        for scene_rel_folder in os.listdir(self.folder):
-            scene_folder = os.path.join(self.folder, scene_rel_folder)
-            if not os.path.isdir(scene_folder):
-                continue
-            item_paths.extend(glob.glob(os.path.join(scene_folder, "*.tif")))
+        for folder in self.folders:
+            for scene_rel_folder in os.listdir(folder):
+                scene_folder = os.path.join(folder, scene_rel_folder)
+                if not os.path.isdir(scene_folder):
+                    continue
+                item_paths.extend(glob.glob(os.path.join(scene_folder, "*.tif")))
         return item_paths
 
     def __getitem__(self, index: int):
@@ -126,15 +138,19 @@ class LuccPretrainDataset(LuccFileDataset):
         return {"x": x, "mask": mask, "tif_path": item_path}
 
 
+@dataclasses.dataclass(kw_only=True)
+class LuccFineTuningDatasetArgs(LuccBaseDatasetArgs):
+    folder: str
+
+
 class LuccFineTuningDataset(LuccFileDataset):
     sat_name = "sat"
     gt_name = "gt"
 
-    def __init__(self, args: LuccFileDatasetArgs):
+    def __init__(self, args: LuccFineTuningDatasetArgs):
         super().__init__(args)
         self.sat_folder = os.path.join(args.folder, self.sat_name)
         self.gt_folder = os.path.join(args.folder, self.gt_name)
-
         self.image_size_in_patch_unit = self.image_size // self.model_patch_size
         self.item_paths = self.init_item_paths()
 

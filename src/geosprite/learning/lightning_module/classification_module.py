@@ -41,14 +41,14 @@ class ClassificationModule(BaseModule):
         y_hat = self(batch)
         y = batch["y"]
         loss = self.cross_entropy_loss(y_hat, y)
-        self.log(name="train_loss", value=loss, sync_dist=True)
+        self.log(name="train_loss", value=loss, on_step=True, sync_dist=True)
         return loss
 
     def validation_step(self, batch: dict, batch_index: int):
         y_hat = self(batch)
         y = batch["y"]
         loss = self.cross_entropy_loss(y_hat, y)
-        self.log(name="val_loss", value=loss, sync_dist=True)
+        self.log(name="val_loss", value=loss, on_epoch=True, sync_dist=True)
         self.val_global_metric.update(y_hat, y)
         self.val_classes_metric.update(y_hat, y)
 

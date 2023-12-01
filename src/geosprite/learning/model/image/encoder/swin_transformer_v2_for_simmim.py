@@ -1,18 +1,18 @@
 import torch
 
-from .swin_transformer import BaseSwinTransformer, SwinTransformerStages, SwinTransformerStagesArgs
+from .swin_transformer_v2 import BaseSwinTransformerV2, SwinTransformerV2Stages, SwinTransformerV2StagesArgs
 from torch import nn
 from einops import rearrange, repeat
 from timm.models.layers import trunc_normal_
 
-__all__ = ["SwinTransformerForSimMIMDebug", "SwinTransformerForSimMIMBase"]
+__all__ = ["SwinTransformerV2ForSimMIMDebug", "SwinTransformerV2ForSimMIMBase"]
 
 
-class SwinTransformerForSimMIM(BaseSwinTransformer):
+class SwinTransformerForSimMIM(BaseSwinTransformerV2):
     def __init__(self,
                  image_channels: int,
                  patch_size: int,
-                 stage_args: SwinTransformerStagesArgs):
+                 stage_args: SwinTransformerV2StagesArgs):
         super().__init__()
         self.image_channels = image_channels
         self.patch_size = patch_size
@@ -32,7 +32,7 @@ class SwinTransformerForSimMIM(BaseSwinTransformer):
 
         self.fusion_channels = nn.Linear(in_features=self.image_channels*self.stage_args.embedding_dim,
                                          out_features=self.stage_args.embedding_dim)
-        self.swin_transformer = SwinTransformerStages(stage_args)
+        self.swin_transformer = SwinTransformerV2Stages(stage_args)
 
     @torch.jit.ignore
     def no_weight_decay_keywords(self):
@@ -66,13 +66,14 @@ class SwinTransformerForSimMIM(BaseSwinTransformer):
         return x
 
 
-class SwinTransformerForSimMIMDebug(SwinTransformerForSimMIM):
+class SwinTransformerV2ForSimMIMDebug(SwinTransformerForSimMIM):
     def __init__(self, image_channels: int):
         patch_size = 16
-        stage_args = SwinTransformerStagesArgs(
+        stage_args = SwinTransformerV2StagesArgs(
             use_absolute_position_embedding=False,
             use_relative_position_embedding=True,
             window_size=4,
+            pretrain_window_size=4,
             embedding_dim=32,
             depth_in_stages=[2, 2],
             heads_in_stages=[4, 8],
@@ -82,13 +83,14 @@ class SwinTransformerForSimMIMDebug(SwinTransformerForSimMIM):
         super().__init__(image_channels=image_channels, patch_size=patch_size, stage_args=stage_args)
 
 
-class SwinTransformerForSimMIMBase(SwinTransformerForSimMIM):
+class SwinTransformerV2ForSimMIMBase(SwinTransformerForSimMIM):
     def __init__(self, image_channels: int):
         patch_size = 4
-        stages_args = SwinTransformerStagesArgs(
+        stages_args = SwinTransformerV2StagesArgs(
             use_absolute_position_embedding=False,
             use_relative_position_embedding=True,
             window_size=8,
+            pretrain_window_size=8,
             embedding_dim=128,
             depth_in_stages=[2, 2, 18, 2],
             heads_in_stages=[4, 8, 16, 32],
@@ -96,6 +98,25 @@ class SwinTransformerForSimMIMBase(SwinTransformerForSimMIM):
             mlp_ratio=4,
             dropout=0)
         super().__init__(image_channels=image_channels, patch_size=patch_size, stage_args=stages_args)
+
+
+class SwinTransformerV2ForSimMIMLarge(SwinTransformerForSimMIM):
+    def __init__(self, image_channels: int):
+        patch_size = 4
+        stages_args = SwinTransformerV2StagesArgs(
+            use_absolute_position_embedding=False,
+            use_relative_position_embedding=True,
+            window_size=8,
+            pretrain_window_size=8,
+            embedding_dim=192,
+            depth_in_stages=[2, 2, 18, 2],
+            heads_in_stages=[6, 12, 24, 48],
+            out_indices=[0, 1, 2, 3],
+            mlp_ratio=4,
+            dropout=0)
+        super().__init__(image_channels=image_channels, patch_size=patch_size, stage_args=stages_args)
+
+
 
 
 
