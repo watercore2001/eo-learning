@@ -6,6 +6,6 @@ init_args:
     model_patch_size: 4
   dataloader_args:
     batch_size: 16
-    num_workers: 0
+    num_workers: 8
     pin_memory: True
     shuffle: True

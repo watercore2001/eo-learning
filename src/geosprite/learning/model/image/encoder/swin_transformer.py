@@ -160,7 +160,8 @@ class SwinTransformerBlock(nn.Module):
         if self.cyclic_shifter is not None:
             # shift_mask is not parameter
             x, shift_mask = self.cyclic_shifter.shift(x)
-            shift_mask = repeat(shift_mask, pattern="window_num_per_image mm1 mm2 -> (b window_num_per_image) heads mm1 mm2",
+            shift_mask = repeat(shift_mask,
+                                pattern="window_num_per_image mm1 mm2 -> (b window_num_per_image) heads mm1 mm2",
                                 b=b, heads=self.heads)
         else:
             shift_mask = None

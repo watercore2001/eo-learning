@@ -1,4 +1,4 @@
-class_path: geosprite.learning.lightning_datamodule.LuccDataModule
+class_path: geosprite.learning.lightning_datamodule.LuccPretrainDataModule
 init_args:
   dataset_args:
     folder: "/mnt/data1/dataset/sentinel-s2-l2a/"

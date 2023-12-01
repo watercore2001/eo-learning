@@ -29,7 +29,6 @@ class SimMIMPreTrainingModule(BaseModule):
                       patch_size2=self.patch_size)
 
         # 0 value in x means nodata, model cannot recover it
-
         loss_mask = (mask == 1) & (x != 0)
         mask_loss = (all_loss * loss_mask).sum() / loss_mask.sum()
         self.log(name="mask_loss", value=mask_loss, on_step=True, sync_dist=True)

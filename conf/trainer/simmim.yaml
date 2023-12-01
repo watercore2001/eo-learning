@@ -8,6 +8,7 @@ callbacks:
   - class_path: pytorch_lightning.callbacks.ModelCheckpoint
     init_args:
       filename: "{epoch:03d}_{mask_loss:.4f}"
+      save_top_k: -1
       every_n_epochs: 5
       save_last: True
   - class_path: pytorch_lightning.callbacks.LearningRateMonitor
