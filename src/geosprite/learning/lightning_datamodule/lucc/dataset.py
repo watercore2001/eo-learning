@@ -7,7 +7,9 @@ import rasterio
 from torch.utils.data import Dataset
 import glob
 from einops import rearrange
+import torchvision
 from torchvision.transforms import v2
+torchvision.disable_beta_transforms_warning()
 
 from .mask_generator import MaskGenerator
 

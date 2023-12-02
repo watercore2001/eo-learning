@@ -5,7 +5,6 @@ import json
 import numpy as np
 from typing import Literal
 
-from pytorch_lightning.utilities.types import EVAL_DATALOADERS
 from torch.utils.data import DataLoader
 from .dataset import *
 from ..base_dataloader import BaseDataloaderArgs
