@@ -118,16 +118,19 @@ class LuccPretrainDataset(LuccFileDataset):
 
     def init_item_paths(self) -> list:
         item_paths = []
-        for folder in self.folders:
+        for i, folder in enumerate(self.folders):
             for scene_rel_folder in os.listdir(folder):
                 scene_folder = os.path.join(folder, scene_rel_folder)
                 if not os.path.isdir(scene_folder):
                     continue
-                item_paths.extend(glob.glob(os.path.join(scene_folder, "*.tif")))
+                rel_paths = [(i, rel_path) for rel_path in glob.glob(pathname=os.path.join(scene_rel_folder, "*.tif"),
+                                                                     root_dir=folder)]
+                item_paths.extend(rel_paths)
         return item_paths
 
     def __getitem__(self, index: int):
-        item_path = self.item_paths[index]
+        i, rel_path = self.item_paths[index]
+        item_path = os.path.join(self.folders[i], rel_path)
 
         x = self.get_x(item_path)
         mask = self.mask_generator()
