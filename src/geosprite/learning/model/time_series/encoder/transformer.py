@@ -105,7 +105,8 @@ class CosineAttention(nn.Module):
         q = functional.normalize(q, dim=-1)
         k = functional.normalize(k, dim=-1)
         # make the value is between [0, 100]
-        logit_scale = torch.clamp(self.logit_scale, max=torch.log(torch.tensor(1. / 0.01))).exp()
+        logit_scale = torch.clamp(self.logit_scale,
+                                  max=torch.log(torch.tensor(1. / 0.01)).to(self.logit_scale.device)).exp()
         attn = einsum(q, k, "b n l1 d, b n l2 d -> b n l1 l2").mul(logit_scale)
 
         attn += attn_mask if attn_mask is not None else 0
