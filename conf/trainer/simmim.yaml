@@ -1,6 +1,7 @@
 devices: 8
 accelerator: gpu
 max_epochs: 100
+strategy: "deepspeed_stage_2"
 logger: True
 default_root_dir: "/home/xials/code/eo-learning/workspace/"
 profiler: simple
