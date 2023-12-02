@@ -1,0 +1,16 @@
+class_path: geosprite.learning.lightning_module.SimMIMPreTrainingModule
+init_args:
+  encoder:
+    class_path: geosprite.learning.model.image.encoder.SwinTransformerV2ForSimMIMLarge
+    init_args:
+      image_channels: 10
+  header:
+    class_path: geosprite.learning.model.image.header.ReshapeHeaderForSwinLarge
+    init_args:
+      num_classes: 10
+  optim_args:
+    weight_decay: 0.05
+    warmup_epochs: 5
+    annealing_epochs: 45
+    max_lr: 1e-4
+    min_lr: 1e-5

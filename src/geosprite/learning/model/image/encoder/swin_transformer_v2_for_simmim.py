@@ -5,7 +5,7 @@ from torch import nn
 from einops import rearrange, repeat
 from timm.models.layers import trunc_normal_
 
-__all__ = ["SwinTransformerV2ForSimMIMDebug", "SwinTransformerV2ForSimMIMBase"]
+__all__ = ["SwinTransformerV2ForSimMIMDebug", "SwinTransformerV2ForSimMIMBase", "SwinTransformerV2ForSimMIMLarge"]
 
 
 class SwinTransformerForSimMIM(BaseSwinTransformerV2):

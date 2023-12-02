@@ -17,7 +17,7 @@ class SimMIMPreTrainingModule(BaseModule):
         self.patch_size = self.encoder.patch_size
         self.l1_loss = nn.L1Loss(reduction="none")
 
-    def training_step(self, batch: dict):
+    def training_step(self, batch: dict, batch_index: int):
         x_recover = self(batch)
 
         # x.shape: b c h w
@@ -41,7 +41,7 @@ class SimMIMPreTrainingModule(BaseModule):
         # use mask loss for gradient descent
         return mask_loss
 
-    def validation_step(self, batch: dict):
+    def validation_step(self, batch: dict, batch_index: int):
         x_recover = self(batch)
 
         # x.shape: b c h w

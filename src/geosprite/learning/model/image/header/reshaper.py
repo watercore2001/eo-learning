@@ -2,7 +2,7 @@ from torch import nn
 from einops.layers.torch import Rearrange
 from .base_header import BaseHeader
 
-__all__ = ["ReshapeHeader", "ReshapeHeaderForSwinDebug", "ReshapeHeaderForSwinBase"]
+__all__ = ["ReshapeHeader", "ReshapeHeaderForSwinDebug", "ReshapeHeaderForSwinBase", "ReshapeHeaderForSwinLarge"]
 
 
 class ReshapeHeader(BaseHeader):
@@ -35,6 +35,13 @@ class ReshapeHeaderForSwinDebug(ReshapeHeader):
 class ReshapeHeaderForSwinBase(ReshapeHeader):
     def __init__(self, num_classes: int):
         embedding_dim = 128 * 2 ** 3
+        scale_factor = 4 * 2 ** 3
+        super().__init__(embedding_dim=embedding_dim, num_classes=num_classes, scale_factor=scale_factor)
+
+
+class ReshapeHeaderForSwinLarge(ReshapeHeader):
+    def __init__(self, num_classes: int):
+        embedding_dim = 192 * 2 ** 3
         scale_factor = 4 * 2 ** 3
         super().__init__(embedding_dim=embedding_dim, num_classes=num_classes, scale_factor=scale_factor)
 
