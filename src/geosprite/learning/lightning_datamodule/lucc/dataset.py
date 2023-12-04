@@ -62,10 +62,10 @@ class LuccBaseDataset(Dataset):
 class LuccFileDataset(LuccBaseDataset):
     def __init__(self, args: LuccBaseDatasetArgs):
         super().__init__(args)
-        self.item_paths = []
+        self.rel_paths = []
 
     def __len__(self):
-        return len(self.item_paths)
+        return len(self.rel_paths)
 
     def get_x(self, item_path: str):
         with rasterio.open(item_path) as src:
@@ -98,7 +98,7 @@ class LuccPretrainDataset(LuccFileDataset):
         super().__init__(args)
         self.folders = args.folders
         self.use_aug = args.use_aug
-        self.item_paths = self.init_item_paths()
+        self.folder_ids, self.rel_paths = self.init_item_paths()
         self.mask_generator = MaskGenerator(image_size=args.image_size,
                                             channels=len(self.available_bands),
                                             mask_patch_size=args.mask_patch_size,
@@ -115,20 +115,19 @@ class LuccPretrainDataset(LuccFileDataset):
             all_data = aug_transform(all_data)
         return all_data
 
-    def init_item_paths(self) -> list:
-        item_paths = []
+    def init_item_paths(self) -> tuple[list, list]:
+        folder_ids = []
+        rel_paths = []
         for i, folder in enumerate(self.folders):
-            for scene_rel_folder in os.listdir(folder):
-                scene_folder = os.path.join(folder, scene_rel_folder)
-                if not os.path.isdir(scene_folder):
-                    continue
-                rel_paths = [(i, rel_path) for rel_path in glob.glob(pathname=os.path.join(scene_rel_folder, "*.tif"),
-                                                                     root_dir=folder)]
-                item_paths.extend(rel_paths)
-        return item_paths
+            sub_paths = glob.glob("*/*.tif", root_dir=folder)
+            folder_ids.extend([i] * len(sub_paths))
+            rel_paths.extend(sub_paths)
+
+        return folder_ids, rel_paths
 
     def __getitem__(self, index: int):
-        i, rel_path = self.item_paths[index]
+        i = self.folder_ids[index]
+        rel_path = self.rel_paths[index]
         item_path = os.path.join(self.folders[i], rel_path)
 
         x = self.get_x(item_path)

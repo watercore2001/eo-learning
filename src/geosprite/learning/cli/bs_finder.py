@@ -27,7 +27,7 @@ class LitModule(SimMIMPreTrainingModule):
         self.train_dataset = LuccPretrainDataset(dataset_args)
 
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.batch_size | self.hparams.batch_size, num_workers=24)
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, num_workers=24)
 
 
 def main():
