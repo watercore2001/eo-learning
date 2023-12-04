@@ -1,6 +1,7 @@
 from geosprite.learning.lightning_module import SimMIMPreTrainingModule, AdamWCosineOptimArgs
 from geosprite.learning.model.image.encoder import SwinTransformerV2ForSimMIMLarge
 from geosprite.learning.model.image.header import ReshapeHeaderForSwinLarge
+import numpy as np
 
 from geosprite.learning.lightning_datamodule.lucc.dataset import LuccPretrainDataset, LuccPretrainDatasetArgs
 import torch
@@ -19,7 +20,10 @@ class LitModule(SimMIMPreTrainingModule):
         self.batch_size = batch_size
         dataset_args = LuccPretrainDatasetArgs(folders=["/mnt/data1/dataset/sentinel-s2-l2a/"], image_size=512,
                                                mask_patch_size=32, model_patch_size=4,
-                                               mask_ratio=0.5, use_aug=True)
+                                               mask_ratio=0.5, use_aug=True,
+                                               bands=["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B8A", "B11", "B12"],
+                                               norm_min=np.zeros(shape=(10,)),
+                                               norm_max=np.ones(shape=(10,)) * 10000)
         self.train_dataset = LuccPretrainDataset(dataset_args)
 
     def train_dataloader(self):
