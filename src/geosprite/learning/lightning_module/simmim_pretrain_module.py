@@ -1,7 +1,6 @@
 import os.path
-from typing import Any, Optional
+from typing import Any
 import numpy as np
-from pytorch_lightning.utilities.types import STEP_OUTPUT
 from torch import nn
 from einops import repeat
 

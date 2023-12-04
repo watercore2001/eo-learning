@@ -1,8 +1,6 @@
-# Copyright (c) GeoSprite. All rights reserved.
-#
-# Author: Jia Song
-#
 import torch
+import torchvision
+torchvision.disable_beta_transforms_warning()
 from pytorch_lightning import LightningModule, LightningDataModule
 from pytorch_lightning import Trainer
 from pytorch_lightning.cli import LightningCLI, LightningArgumentParser
