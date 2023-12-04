@@ -34,7 +34,7 @@ def main():
     torch.set_float32_matmul_precision('medium')
     model = LitModule(batch_size=4)
     trainer = Trainer(accelerator="gpu", devices=1, default_root_dir="/home/xials/code/eo-learning/workspace/",
-                      max_epochs=100)
+                      max_steps=1000000, max_epochs=100)
     tuner = Tuner(trainer)
     tuner.scale_batch_size(model=model, mode="binsearch")
     print(f"find batch size: {model.batch_size}")
