@@ -12,7 +12,7 @@ init_args:
     model_patch_size: 4
     mask_ratio: 0.5
   dataloader_args:
-    batch_size: 42
+    batch_size: 24
     num_workers: 32
     pin_memory: True
     shuffle: True
