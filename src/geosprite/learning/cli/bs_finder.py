@@ -18,7 +18,7 @@ class LitModule(SimMIMPreTrainingModule):
                                           max_lr=1e-4, min_lr=1e-5)
         super().__init__(encoder=encoder, header=header, optim_args=optim_args)
         self.batch_size = batch_size
-        dataset_args = LuccPretrainDatasetArgs(folders=["/mnt/data1/dataset/sentinel-s2-l2a/train"], image_size=512,
+        dataset_args = LuccPretrainDatasetArgs(folders=["/mnt/data1/dataset/sentinel-s2-l2a/val"], image_size=512,
                                                mask_patch_size=32, model_patch_size=4,
                                                mask_ratio=0.5, use_aug=True,
                                                bands=["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B8A", "B11", "B12"],
@@ -27,14 +27,14 @@ class LitModule(SimMIMPreTrainingModule):
         self.train_dataset = LuccPretrainDataset(dataset_args)
 
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.batch_size | self.hparams.batch_size)
+        return DataLoader(self.train_dataset, batch_size=self.batch_size | self.hparams.batch_size, num_workers=24)
 
 
 def main():
     torch.set_float32_matmul_precision('medium')
     model = LitModule(batch_size=4)
     trainer = Trainer(accelerator="gpu", devices=1, default_root_dir="/home/xials/code/eo-learning/workspace/",
-                      max_steps=10000000, max_epochs=100)
+                      max_epochs=100)
     tuner = Tuner(trainer)
     tuner.scale_batch_size(model=model, mode="binsearch")
     print(f"find batch size: {model.batch_size}")
