@@ -5,8 +5,8 @@ import torch
 import torch.nn as nn
 from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
-import deepspeed
 from torch.nn import functional
+from torch.utils import checkpoint
 import dataclasses
 from geosprite.learning.model.time_series.encoder import PostNorm, CosineAttention, MLP, TransformerArgs
 from .util import add_tensor, window_partition, window_reverse, WindowShifter
@@ -247,7 +247,7 @@ class SwinTransformerV2Stage(nn.Module):
 
         # calculate attention mask for SW-MSA
         for block in self.blocks:
-            x = deepspeed.checkpointing.checkpoint(block, x)
+            x = checkpoint.checkpoint(block, x)
             # x = block(x)
 
         x = rearrange(x, "b c h w -> b h w c")
