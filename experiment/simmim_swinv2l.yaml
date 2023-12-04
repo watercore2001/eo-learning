@@ -9,5 +9,6 @@ used_ckpt_for_predict: "no"
 
 wandb_logger:
   project: simmim_pretrain
+  offline: True
   name: swinv2_large
   version: swinv2_large
