@@ -116,14 +116,14 @@ class LuccPretrainDataset(LuccFileDataset):
         return all_data
 
     def init_item_paths(self) -> tuple[list, list]:
-        print("start init item paths.")
+        # print("start init item paths.")
         folder_ids = []
         rel_paths = []
         for i, folder in enumerate(self.folders):
             sub_paths = glob.glob("*/*.tif", root_dir=folder)
             folder_ids.extend([i] * len(sub_paths))
             rel_paths.extend(sub_paths)
-        print("finish init item paths.")
+        # print("finish init item paths.")
         return folder_ids, rel_paths
 
     def __getitem__(self, index: int):
