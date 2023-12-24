@@ -1,5 +1,3 @@
-
-
 from .simmim_pretrain_module import SimMIMPreTrainingModule
 from .classification_module import ClassificationModule
 from .base_module import AdamWCosineOptimArgs

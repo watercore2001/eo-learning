@@ -89,17 +89,17 @@ class LuccFineTuningDataModule(LuccBaseDataModule):
         # must save all hyperparameters for checkpoint
         self.save_hyperparameters()
 
-    def make_dataset_args(self, sub_folder_name: str):
-        sub_folder = os.path.join(self.dataset_args.folder, sub_folder_name)
+    def make_dataset(self, stage_name: Literal["train", "val", "test", "predict"]):
+        sub_folder = os.path.join(self.dataset_args.folder, stage_name)
         dataset_args = dataclasses.replace(self.dataset_args, folder=sub_folder)
-        return dataset_args
+        return LuccFineTuningDataset(dataset_args)
 
     def setup(self, stage: [str] = None):
         if stage == "fit":
-            self.train_dataset = LuccFineTuningDataset(self.make_dataset_args("train"))
-            self.val_dataset = LuccFineTuningDataset(self.make_dataset_args("val"))
+            self.train_dataset = self.make_dataset("train")
+            self.val_dataset = self.make_dataset("val")
         if stage == "test":
-            self.test_dataset = LuccFineTuningDataset(self.make_dataset_args("test"))
+            self.test_dataset = self.make_dataset("test")
         if stage == "predict":
             predict_args = LuccPredictDatasetArgs(image_arrays=self.image_arrays,
                                                   bands=self.dataset_args.bands,

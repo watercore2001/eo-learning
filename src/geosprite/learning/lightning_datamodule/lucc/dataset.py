@@ -61,10 +61,6 @@ class LuccBaseDataset(Dataset):
 class LuccFileDataset(LuccBaseDataset):
     def __init__(self, args: LuccBaseDatasetArgs):
         super().__init__(args)
-        self.rel_paths = []
-
-    def __len__(self):
-        return len(self.rel_paths)
 
     def get_x(self, item_path: str):
         with rasterio.open(item_path) as src:
@@ -126,6 +122,9 @@ class LuccPretrainDataset(LuccFileDataset):
         # print("finish init item paths.")
         return folder_ids, rel_paths
 
+    def __len__(self):
+        return len(self.rel_paths)
+
     def __getitem__(self, index: int):
         i = self.folder_ids[index]
         rel_path = self.rel_paths[index]
@@ -166,6 +165,9 @@ class LuccFineTuningDataset(LuccFileDataset):
             gt_path = os.path.join(self.gt_folder, rel_path)
             item_paths.append((sat_path, gt_path))
         return item_paths
+
+    def __len__(self):
+        return len(self.item_paths)
 
     def __getitem__(self, index: int):
         sat_path, gt_path = self.item_paths[index]
