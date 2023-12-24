@@ -8,6 +8,6 @@ used_ckpt_for_test: "no"
 used_ckpt_for_predict: "no"
 
 wandb_logger:
-  project: simmim_water
-  name: swinb_base_ckpt
-  version: swinb_base_ckpt
+  project: debug
+  name: finetuning_swinv2l_water
+  version: finetuning_swinv2l_water
