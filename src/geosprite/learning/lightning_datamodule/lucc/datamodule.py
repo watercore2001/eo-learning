@@ -17,12 +17,14 @@ class LuccBaseDataModule(LightningDataModule):
 
     def __init__(self, dataset_args: LuccBaseDatasetArgs, metadata_path: str):
         super().__init__()
-        with open(metadata_path) as file:
-            metadata = json.load(file)
-            dataset_args.bands = metadata["bands"]
-            norm_data_dict = metadata["norm"]
-            dataset_args.norm_min = np.array([0 for _ in norm_data_dict.values()])
-            dataset_args.norm_max = np.array([value["max"] for value in norm_data_dict.values()])
+        if dataset_args.bands is None:
+            # have not read metadata file
+            with open(metadata_path) as file:
+                metadata = json.load(file)
+                dataset_args.bands = metadata["bands"]
+                norm_data_dict = metadata["norm"]
+                dataset_args.norm_min = np.array([0 for _ in norm_data_dict.values()])
+                dataset_args.norm_max = np.array([value["max"] for value in norm_data_dict.values()])
 
 
 class LuccPretrainDataModule(LuccBaseDataModule):
