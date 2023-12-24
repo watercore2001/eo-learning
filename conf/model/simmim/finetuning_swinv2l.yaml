@@ -1,8 +1,8 @@
 class_path: geosprite.learning.lightning_module.SimMIMFineTuningModule
 init_args:
-  pretrain_ckpt_path: /mnt/disk/geodata/pretrain_checkpoints/swin_base/epoch=049_mask_loss=0.0287.ckpt
+  pretrain_ckpt_path: /mnt/disk/geodata/pretrain_checkpoints/swinv2_large/epoch=005_val_mask_loss=0.0166.ckpt
   decoder:
-    class_path: geosprite.learning.model.image.decoder.UPerDecoderForSwinB
+    class_path: geosprite.learning.model.image.decoder.UPerDecoderForSwinV2L
   header:
     class_path: geosprite.learning.model.image.header.ReshapeHeader
     init_args:

@@ -39,13 +39,14 @@ class PyramidPoolingModule(nn.Module):
 
 
 class UPerDecoder(nn.Module):
-    def __init__(self, input_dims: list[int], output_dim: int, pool_scales: list[int]):
+    def __init__(self, input_dims: list[int], output_dim: int = 512, pool_scales: list[int] = (1, 2, 3, 6)):
         super().__init__()
 
         ppm_dim = input_dims[-1]
         self.ppm = PyramidPoolingModule(pool_scales, input_dim=ppm_dim, inner_dim=ppm_dim)
 
-        self.fpn = FpnDecoder(input_dims, inner_dim=512, seg_dim=128, output_dim=output_dim)
+        # because will concat four seg_dim, set seg_dim = 0.25 inner_dim
+        self.fpn = FpnDecoder(input_dims, inner_dim=output_dim, seg_dim=output_dim//4, output_dim=output_dim)
 
     def forward(self, x):
         # use ppm for last feature map
@@ -57,4 +58,9 @@ class UPerDecoder(nn.Module):
 
 class UPerDecoderForSwinB(UPerDecoder):
     def __init__(self):
-        super().__init__(input_dims=[128, 256, 512, 1024], output_dim=512, pool_scales=[1, 2, 3, 6])
+        super().__init__(input_dims=[128 * 2**i for i in range(4)])
+
+
+class UPerDecoderForSwinV2L(UPerDecoder):
+    def __init__(self):
+        super().__init__(input_dims=[192 * 2**i for i in range(4)])

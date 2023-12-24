@@ -22,7 +22,6 @@ __all__ = ["LuccBaseDatasetArgs",
 class LuccBaseDatasetArgs:
     image_size: int
     model_patch_size: int
-    use_aug: bool
     # do not need input
     bands: list[str] = None
     norm_min: np.ndarray = None
@@ -91,6 +90,7 @@ class LuccPretrainDatasetArgs(LuccBaseDatasetArgs):
     folders: list[str]
     mask_patch_size: int
     mask_ratio: float
+    use_aug: bool
 
 
 class LuccPretrainDataset(LuccFileDataset):
