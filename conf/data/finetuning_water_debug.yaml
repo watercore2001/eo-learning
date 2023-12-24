@@ -5,7 +5,7 @@ init_args:
     image_size: 512
     model_patch_size: 4
   dataloader_args:
-    batch_size: 32
+    batch_size: 16
     num_workers: 8
     pin_memory: True
     shuffle: True

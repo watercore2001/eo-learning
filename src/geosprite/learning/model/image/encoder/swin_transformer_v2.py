@@ -247,6 +247,7 @@ class SwinTransformerV2Stage(nn.Module):
 
         # calculate attention mask for SW-MSA
         for block in self.blocks:
+            # cannot use checkpoint at here? https://zhuanlan.zhihu.com/p/615122110
             x = checkpoint.checkpoint(block, x)
             # x = block(x)
 
