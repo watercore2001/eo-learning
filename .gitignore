@@ -134,5 +134,5 @@ dmypy.json
 # other data
 workspace/
 debug/
-user_experiment/
-user_conf/
+_experiment/
+_conf/
